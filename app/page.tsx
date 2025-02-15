@@ -6,7 +6,7 @@ import logo from '../public/logo.png';
 
 export default function Home() {
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-4 ">
+    <main className="flex flex-col items-center justify-center h-screen w-full overflow-hidden p-4 relative">
       <Image
         src={landing_background}
         alt="Background"
@@ -26,10 +26,10 @@ export default function Home() {
       />
       <div>
         <h1 className="text-4xl text-center text-white font-poppins">
-            <b>AI Agents made</b> <i className="font-thin">easy</i>
+          <b>AI Agents made</b> <i className="font-thin">easy</i>
         </h1>
         <h1 className="text-2xl text-center text-white font-geistMono mt-3 italic">
-            coming soon 
+          coming soon 
         </h1>
       </div>
     </main>
