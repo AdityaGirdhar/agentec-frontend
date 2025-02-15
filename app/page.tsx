@@ -1,8 +1,4 @@
-'use client';
-
-import Image from 'next/image';
-import landing_background from '../public/landing_background.png';
-import logo from '../public/logo.png';
+import Image from "next/image";
 
 export default function Home() {
   return (
