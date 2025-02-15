@@ -29,7 +29,7 @@ export default function Home() {
             <b>AI Agents made</b> <i className="font-thin">easy</i>
         </h1>
         <h1 className="text-2xl text-center text-white font-geistMono mt-3 italic">
-            coming soon
+            coming soon 
         </h1>
       </div>
     </main>
