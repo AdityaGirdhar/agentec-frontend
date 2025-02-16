@@ -31,6 +31,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json(tokenData);
   } catch (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: `Internal server error ${error}` }, { status: 500 });
   }
 }
