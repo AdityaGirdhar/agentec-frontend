@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function CallbackPage() {
+function CallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
@@ -29,4 +30,12 @@ export default function CallbackPage() {
   }, [code]);
 
   return <p>Logging in...</p>;
+}
+
+export default function CallbackAuth() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <CallbackPage />
+    </Suspense>
+  );
 }
