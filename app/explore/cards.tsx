@@ -3,9 +3,18 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
+type Repo = {
+  id: number;
+  name: string;
+  description: string;
+  owner_name: string;
+  owner_avatar_url: string;
+  readme: string;
+};
+
 export default function Cards() {
   const [repos, setRepos] = useState([]);
-  const [selectedRepo, setSelectedRepo] = useState(null);
+  const [selectedRepo, setSelectedRepo] = useState<Repo | null>(null);
   const API_URL = 'http://localhost:8000';
 
   useEffect(() => {
@@ -27,7 +36,7 @@ export default function Cards() {
     <main className="flex flex-col items-center justify-center min-h-screen p-4">
       <h1 className="text-2xl font-bold mb-4">GitHub Repositories</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-5xl">
-        {repos.map((repo) => (
+        {repos.map((repo: Repo) => (
           <div
             key={repo.id}
             className="border p-4 rounded shadow cursor-pointer hover:bg-gray-100"
