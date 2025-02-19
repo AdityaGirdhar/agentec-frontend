@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Sidebar from "./navbar";
 
 export default function DashboardPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,6 +29,8 @@ export default function DashboardPage() {
   };
 
   return (
+    <div className="bg-black text-white">
+    <Sidebar/>
     <div className="flex flex-col items-center justify-center h-screen">
       <h1 className="text-2xl mb-4">Dashboard</h1>
       {user ? (
@@ -45,6 +48,7 @@ export default function DashboardPage() {
       ) : (
         <p>Loading...</p>
       )}
+    </div>
     </div>
   );
 }

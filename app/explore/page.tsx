@@ -5,7 +5,7 @@ import Cards from './cards';
 
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState('');
-  const API_URL = 'http://localhost:8000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   console.log('API_URL:', API_URL);
 

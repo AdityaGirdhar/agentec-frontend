@@ -15,12 +15,18 @@ type Repo = {
 export default function Cards() {
   const [repos, setRepos] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState<Repo | null>(null);
-  const API_URL = 'http://localhost:8000';
+  const [searchQuery, setSearchQuery] = useState("");
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  const filteredRepos = repos.filter((repo: Repo) =>
+    repo.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     const fetchRepos = async () => {
       try {
         const response = await fetch(`${API_URL}/database/get-all-repos`);
+        console.log(response);
         if (!response.ok) throw new Error('Failed to fetch repositories');
         const data = await response.json();
         setRepos(data);
@@ -33,10 +39,16 @@ export default function Cards() {
   }, []);
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-4">
-      <h1 className="text-2xl font-bold mb-4">GitHub Repositories</h1>
+    <main className="flex flex-col items-center justify-center p-4 w-full">
+      <input
+        type="text"
+        placeholder="Search repositories..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="mb-4 p-2 border rounded w-full max-w-md text-black"
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-5xl">
-        {repos.map((repo: Repo) => (
+        {filteredRepos.map((repo: Repo) => (
           <div
             key={repo.id}
             className="border p-4 rounded shadow cursor-pointer hover:bg-gray-100"
@@ -50,7 +62,7 @@ export default function Cards() {
               />
               <h2 className="text-lg font-semibold">{repo.name}</h2>
             </div>
-            <p className="text-sm text-gray-600">{repo.description || 'No description available'}</p>
+            <p className="text-sm text-gray-200">{repo.description || 'No description available'}</p>
           </div>
         ))}
       </div>
