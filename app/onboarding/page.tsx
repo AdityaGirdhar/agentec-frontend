@@ -12,9 +12,6 @@ export default function OnboardingPage() {
   const onGoogleLogin = () => {
     window.location.href = "/dashboard";
   }
-  // const onGithubLogin = () => {
-  //   alert("Github login not implemented yet.");
-  // }
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
