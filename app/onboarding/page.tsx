@@ -12,7 +12,7 @@ import { Building2, User } from "lucide-react";
 export default function OnboardingPage() {
   const router = useRouter();
   const onGoogleLogin = () => {
-    router.push('/dashboard');
+    window.location.href = "/dashboard";
   }
   const onGithubLogin = () => {
     alert("Github login not implemented yet.");
@@ -45,7 +45,7 @@ export default function OnboardingPage() {
                   </Link>
                 </Button>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href={`/onboarding`} onClick={onGithubLogin}>
+                  <Link href={`/onboarding`} onClick={onGoogleLogin}>
                     <User className="mr-2 h-4 w-4" />
                     Individual
                   </Link>
