@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AgentSchema } from "@/types/agent";
-import { Star, Download, ExternalLink, Folder, CheckCircle, HardDrive } from "lucide-react";
+import { Star, Download, CheckCircle } from "lucide-react";
 
 export default function AgentCard({ agent, onClick }: { agent: AgentSchema, onClick: () => void }) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);

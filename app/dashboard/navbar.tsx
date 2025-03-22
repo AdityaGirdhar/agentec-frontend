@@ -16,6 +16,7 @@ const links = [
 
 export default function Sidebar() {
   const [expanded, setExpanded] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
 
   const router = useRouter();

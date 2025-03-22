@@ -23,6 +23,7 @@ async function fetchReadme(url: string): Promise<string> {
   const match = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
   if (!match) return "Failed to load README.";
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, owner, repo] = match;
   const apiUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`;
 
@@ -38,6 +39,7 @@ const downloadRepo = (repoUrl: string) => {
     return;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, owner, repo] = match;
   const zipUrl = `https://github.com/${owner}/${repo}/archive/refs/heads/main.zip`;
 
