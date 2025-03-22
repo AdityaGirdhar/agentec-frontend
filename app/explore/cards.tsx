@@ -25,21 +25,20 @@ export default function Cards() {
   useEffect(() => {
     const fetchRepos = async () => {
       try {
-        const response = await fetch(`${API_URL}/database/get-all-repos`);
+        const response = await fetch(`${API_URL}/agents/get-all-agents`);
         console.log(response);
         if (!response.ok) throw new Error('Failed to fetch repositories');
         const data = await response.json();
         setRepos(data);
       } catch (error) {
         console.error(error);
-        alert('Error fetching repositories');
       }
     };
     fetchRepos();
   }, []);
 
   return (
-    <main className="flex flex-col items-center justify-center p-4 w-full">
+    <main className="flex flex-col justify-center pt-4 w-full">
       <input
         type="text"
         placeholder="Search repositories..."
@@ -76,8 +75,8 @@ export default function Cards() {
             >
               ✖
             </button>
-            <h2 className="text-xl font-bold mb-2">{selectedRepo.name}</h2>
-            <ReactMarkdown className="prose max-w-none">{selectedRepo.readme || 'No README available'}</ReactMarkdown>
+            <h2 className="text-xl font-bold mb-2 text-black">{selectedRepo.name}</h2>
+            <ReactMarkdown className="prose max-w-none text-black">{selectedRepo.readme || 'No README available'}</ReactMarkdown>
           </div>
         </div>
       )}

@@ -1,54 +1,86 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Sidebar from "./navbar";
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { KeysModal } from "./keysModal"
+import { useEffect, useState } from "react"
 
-export default function DashboardPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [user, setUser] = useState<any>(null);
-  const router = useRouter();
+export default function Page() {
+  const [showModal, setShowModal] = useState(false)
+  const [isBlurred, setIsBlurred] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/auth");
-      return;
-    }
+    setShowModal(true)
+    setIsBlurred(true)
+  }, [])
 
-    fetch("https://api.github.com/user", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => setUser(data));
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/auth");
-  };
+  const handleModalClose = () => {
+    setShowModal(false)
+    setIsBlurred(false)
+  }
 
   return (
-    <div className="bg-black text-white">
-    <Sidebar/>
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-2xl mb-4">Dashboard</h1>
-      {user ? (
-        <div className="text-center">
-          <img src={user.avatar_url} alt="Avatar" className="w-24 h-24 rounded-full" />
-          <h2 className="text-xl mt-2">{user.name || user.login}</h2>
-          <p>@{user.login}</p>
-          <button 
-            onClick={handleLogout} 
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
-          >
-            Logout
-          </button>
-        </div>
-      ) : (
-        <p>Loading...</p>
-      )}
+    <>
+    <div
+      className={`transition-all duration-200 ${
+        isBlurred ? 'blur-sm pointer-events-none' : ''
+      }`}
+    >
+    <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="#">
+                      Dashboard
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Home</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+              <div className="aspect-video rounded-xl bg-muted/50" />
+              <div className="aspect-video rounded-xl bg-muted/50" />
+              <div className="aspect-video rounded-xl bg-muted/50" />
+            </div>
+            <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+          </div>
+        </SidebarInset>
+    </SidebarProvider>
     </div>
+    
+    {showModal && 
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="animate-in zoom-in-90 duration-200">
+      <KeysModal onClose={handleModalClose} />
+      </div>
     </div>
-  );
+    }
+
+    </>
+  )
 }

@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Home, Settings, Menu, Bot, Bookmark, LayoutDashboard, CircleGauge, ListChecks, Building2, ShoppingBag, X, LogOut } from "lucide-react";
+import { Settings, Menu, Bot, Bookmark, LayoutDashboard, CircleGauge, ListChecks, Building2, ShoppingBag, X, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { link } from "fs";
 
 const links = [
-  { name: "Home", icon: Home, link: "/" },
   { name: "Dashboard", icon: LayoutDashboard, link: "/dashboard" },
   { name: "Your Agents", icon: Bot, link: "/dashboard/agents" },
   { name: "Saved Agents", icon: Bookmark, link: "/dashboard/saved" },
@@ -17,7 +15,7 @@ const links = [
 ];
 
 export default function Sidebar() {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [user, setUser] = useState<any>(null);
 
   const router = useRouter();
@@ -34,15 +32,16 @@ export default function Sidebar() {
     })
       .then((res) => res.json())
       .then((data) => setUser(data));
-  }, []);
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    router.push("/auth");
+    router.push("/");
   };
 
   return (
-    <aside className={`fixed left-0 h-screen bg-zinc-800 text-white flex flex-col ${expanded ? "w-56" : "w-20"} transition-all duration-100 p-4`}>
+    <aside className={`h-screen bg-zinc-800 text-white flex flex-col ${expanded ? "w-56" : "w-20"} transition-all duration-100 p-4`}>
+      
       {/* Toggle Button */}
       <button className="ml-1 mt-4 p-2 bg-zinc-800 rounded-md" onClick={() => setExpanded(!expanded)}>
       {expanded ? <X size={24} /> : <Menu size={24} />}
@@ -56,12 +55,12 @@ export default function Sidebar() {
 
       {/* Navigation Links */}
       <nav className="flex flex-col mt-6 gap-1 flex-grow">
-      {links.map(({ name, icon: Icon, link }) => (
-        <button onClick={() => goToLink(link)} key={name} className="flex items-center gap-3 p-3 hover:bg-zinc-700 rounded-md">
-        <Icon size={24} />
-        {expanded && <span>{name}</span>}
-        </button>
-      ))}
+        {links.map(({ name, icon: Icon, link }) => (
+          <button onClick={() => goToLink(link)} key={name} className="flex items-center gap-3 p-3 hover:bg-zinc-700 rounded-md">
+          <Icon size={24} />
+          {expanded && <span>{name}</span>}
+          </button>
+        ))}
       </nav>
 
       {/* User Section */}
