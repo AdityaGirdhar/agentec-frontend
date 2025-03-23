@@ -53,21 +53,32 @@ export default function Page() {
                       Dashboard
                     </BreadcrumbLink>
                   </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Home</BreadcrumbPage>
-                  </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-            <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-              <div className="aspect-video rounded-xl bg-muted/50" />
-              <div className="aspect-video rounded-xl bg-muted/50" />
-              <div className="aspect-video rounded-xl bg-muted/50" />
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pr-10">
+            <h1 className="text-2xl font-semibold">Dashboard</h1>
+            <div className="grid auto-rows-min gap-4 md:grid-cols-2">
+              <div className="aspect-video rounded-xl bg-muted/50 p-4">
+                <h2 className="text-lg font-medium">Costs</h2>
+                <p className="text-sm text-muted-foreground">No sufficient data</p>
+              </div>
+              <div className="aspect-video rounded-xl bg-muted/50 p-4">
+                <h2 className="text-lg font-medium">Summary</h2>
+                <p className="text-sm text-muted-foreground">No sufficient data</p>
+              </div>
             </div>
-            <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+            <div className="grid auto-rows-min gap-4 md:grid-cols-2">
+              <div className="aspect-video rounded-xl bg-muted/50 p-4">
+                <h2 className="text-lg font-medium">Recommended Actions</h2>
+                <p className="text-sm text-muted-foreground">No sufficient data</p>
+              </div>
+              <div className="aspect-video rounded-xl bg-muted/50 p-4">
+                <h2 className="text-lg font-medium">Schedules</h2>
+                <p className="text-sm text-muted-foreground">No schedules created</p>
+              </div>
+            </div>
           </div>
         </SidebarInset>
     </SidebarProvider>

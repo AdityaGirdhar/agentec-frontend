@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import fullLogo from "@/public/full-logo.png"
 import Image from "next/image"
@@ -9,8 +10,25 @@ import Link from "next/link";
 import { Building2, User } from "lucide-react";
 
 export default function OnboardingPage() {
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setLoading(false)
+    }, 3000)
+    return () => clearTimeout(timeout)
+  }, [])
+
   const onGoogleLogin = () => {
     window.location.href = "/dashboard";
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-muted">
+        <p className="text-lg text-muted-foreground">Logging you in...</p>
+      </div>
+    )
   }
 
   return (
@@ -22,39 +40,39 @@ export default function OnboardingPage() {
           </div>
         </a>
         <div className={cn("flex flex-col gap-6")}>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome, Aditya</CardTitle>
-          <CardDescription>
-            Who are you joining Agentec as?
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form>
-            <div className="grid gap-6">
-              <div className="flex flex-col gap-4">
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href={`/onboarding`} onClick={onGoogleLogin}>
-                    <Building2 className="mr-2 h-4 w-4" />
-                    Organisation
-                  </Link>
-                </Button>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href={`/onboarding`} onClick={onGoogleLogin}>
-                    <User className="mr-2 h-4 w-4" />
-                    Individual
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </div>
-    </div>
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl">Welcome, Ahmed</CardTitle>
+              <CardDescription>
+                Who are you joining Agentec as?
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form>
+                <div className="grid gap-6">
+                  <div className="flex flex-col gap-4">
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href={`/onboarding`} onClick={onGoogleLogin}>
+                        <Building2 className="mr-2 h-4 w-4" />
+                        Organisation
+                      </Link>
+                    </Button>
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href={`/onboarding`} onClick={onGoogleLogin}>
+                        <User className="mr-2 h-4 w-4" />
+                        Individual
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+          <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
+            By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+            and <a href="#">Privacy Policy</a>.
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -29,9 +29,9 @@ import fullLogo from "@/public/full-logo.png"
 // This is sample data.
 const data = {
   user: {
-    name: "Aditya Girdhar",
-    email: "aditya21005@iiitd.ac.in",
-    avatar: "@/public/92713380.jpeg",
+    name: "Ahmed Hanoon",
+    email: "ahmed21006@iiitd.ac.in",
+    avatar: "@/public/account.png",
   },
   teams: [
     {
@@ -73,24 +73,25 @@ const data = {
     // },
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: LayoutDashboard,
     },
     {
+      title: "Tasks",
+      url: "/tasks",
+      icon: CircleCheckBig,
+    },
+    {
       title: "Agents",
-      url: "#",
+      url: "/agents",
       icon: Bot,
     },
     {
       title: "Marketplace",
-      url: "#",
+      url: "/marketplace",
       icon: ShoppingCart,
     },
-    {
-      title: "Tasks",
-      url: "#",
-      icon: CircleCheckBig,
-    },
+
     {
       title: "Budgets",
       url: "#",

@@ -30,7 +30,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import Image from "next/image"
-import profileImg from "@/public/92713380.jpeg"
+import profileImg from "@/public/account.png"
 
 export function NavUser({
   user,

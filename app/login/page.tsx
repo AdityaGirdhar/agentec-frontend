@@ -6,9 +6,8 @@ import Image from "next/image"
 
 export default function LoginPage() {
   const onGoogleLogin = () => {
-    window.open(
+    window.location.href =
       "https://accounts.google.com/o/oauth2/v2/auth?client_id=412838508050-80mfevfc7md6difcnt54jok1q5blknip.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fonboarding&response_type=code&scope=openid+email+profile&access_type=offline&prompt=consent"
-      ,"_blank");
   }
 
   const onGithubLogin = () => {
