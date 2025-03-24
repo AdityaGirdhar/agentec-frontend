@@ -25,99 +25,87 @@ import {
 } from "@/components/ui/sidebar"
 import Image from "next/image"
 import fullLogo from "@/public/full-logo.png"
-
-// This is sample data.
-const data = {
-  user: {
-    name: "Ahmed Hanoon",
-    email: "ahmed21006@iiitd.ac.in",
-    avatar: "@/public/account.png",
-  },
-  teams: [
-    {
-      name: "MIDAS Lab",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise Plan",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    // {
-    //   title: "Playground",
-    //   url: "#",
-    //   icon: SquareTerminal,
-    //   isActive: true,
-    //   items: [
-    //     {
-    //       title: "History",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Starred",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Settings",
-    //       url: "#",
-    //     },
-    //   ],
-    // },
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      title: "Tasks",
-      url: "/tasks",
-      icon: CircleCheckBig,
-    },
-    {
-      title: "Agents",
-      url: "/agents",
-      icon: Bot,
-    },
-    {
-      title: "Marketplace",
-      url: "/marketplace",
-      icon: ShoppingCart,
-    },
-
-    {
-      title: "Budgets",
-      url: "#",
-      icon: CircleDollarSign,
-    },
-    {
-      title: "Reports",
-      url: "#",
-      icon: ClipboardPlus,
-    },
-  ],
-}
+import accountIcon from "@/public/account.png"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = React.useState<{ name: string; email: string; avatar: string } | null>(null)
+
+  React.useEffect(() => {
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser)
+      console.log(parsedUser.picture)
+      setUser({
+        name: parsedUser.name || "Unknown User",
+        email: parsedUser.email || "No Email",
+        avatar: parsedUser.picture || accountIcon.src, // Default avatar if none provided
+      })
+    }
+  }, [])
+
+  const data = {
+    teams: [
+      {
+        name: "MIDAS Lab",
+        logo: GalleryVerticalEnd,
+        plan: "Enterprise Plan",
+      },
+      {
+        name: "Acme Corp.",
+        logo: AudioWaveform,
+        plan: "Startup",
+      },
+      {
+        name: "Evil Corp.",
+        logo: Command,
+        plan: "Free",
+      },
+    ],
+    navMain: [
+      {
+        title: "Dashboard",
+        url: "/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Tasks",
+        url: "/tasks",
+        icon: CircleCheckBig,
+      },
+      {
+        title: "Agents",
+        url: "/agents",
+        icon: Bot,
+      },
+      {
+        title: "Marketplace",
+        url: "/marketplace",
+        icon: ShoppingCart,
+      },
+      {
+        title: "Budgets",
+        url: "#",
+        icon: CircleDollarSign,
+      },
+      {
+        title: "Reports",
+        url: "#",
+        icon: ClipboardPlus,
+      },
+    ],
+  }
+
   return (
     <Sidebar collapsible="icon" {...props}>
-      <Image className="pl-4 pt-8 pb-3 pr-14" src={fullLogo} alt="" />
+      <Image className="pl-4 pt-8 pb-3 pr-14" src={fullLogo} alt="Logo" />
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {user && <NavUser user={user} />}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

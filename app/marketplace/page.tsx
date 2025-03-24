@@ -1,22 +1,22 @@
 'use client'
 
-import { useState } from "react"
-import Link from "next/link"
-import { AppSidebar } from "@/components/app-sidebar"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { Bookmark } from "lucide-react"
+} from "@/components/ui/sidebar";
+import { Bookmark } from "lucide-react";
+import SearchBar from "./searchBar";
 
 const agents = [
   {
@@ -34,17 +34,35 @@ const agents = [
     description:
       "Performs deep analysis on business metrics, generates executive summaries, and identifies strategic opportunities.",
   },
-]
+];
 
 export default function Page() {
-  const [bookmarked, setBookmarked] = useState<{ [key: string]: boolean }>({})
+  const [bookmarked, setBookmarked] = useState<{ [key: string]: boolean }>({});
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [filteredAgents, setFilteredAgents] = useState(agents);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUserEmail(parsedUser.email);
+
+      const storedBookmarks = localStorage.getItem(`bookmarks-${parsedUser.email}`);
+      if (storedBookmarks) {
+        setBookmarked(JSON.parse(storedBookmarks));
+      }
+    }
+  }, []);
 
   const toggleBookmark = (name: string) => {
-    setBookmarked((prev) => ({
-      ...prev,
-      [name]: !prev[name],
-    }))
-  }
+    setBookmarked((prev) => {
+      const updatedBookmarks = { ...prev, [name]: !prev[name] };
+      if (userEmail) {
+        localStorage.setItem(`bookmarks-${userEmail}`, JSON.stringify(updatedBookmarks));
+      }
+      return updatedBookmarks;
+    });
+  };
 
   return (
     <SidebarProvider>
@@ -68,16 +86,21 @@ export default function Page() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold">Marketplace</h1>
           </div>
+          <SearchBar onSearch={(query) => {
+            setFilteredAgents(
+              agents.filter((agent) => agent.name.toLowerCase().includes(query.toLowerCase()))
+            );
+          }} />
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {agents.map((agent) => (
+            {filteredAgents.map((agent) => (
               <div
                 key={agent.name}
                 className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition"
               >
                 <button
                   onClick={() => toggleBookmark(agent.name)}
-                  className="absolute top-4 right-4 p-1 rounded-full border border-black"
+                  className="absolute top-4 right-4 p-1 rounded-full"
                 >
                   <Bookmark
                     size={20}
@@ -93,5 +116,5 @@ export default function Page() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

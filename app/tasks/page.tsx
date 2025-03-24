@@ -39,11 +39,6 @@ export default function Page() {
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pr-10">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold">Tasks</h1>
-            <Link href="/tasks/new_task">
-              <Button className="bg-black text-white hover:bg-black/90">
-                New Task
-              </Button>
-            </Link>
           </div>
           <div className="grid auto-rows-min gap-4 md:grid-cols-2">
             <div className="aspect-video rounded-xl bg-muted/50 p-4">
@@ -54,6 +49,18 @@ export default function Page() {
               <h2 className="text-lg font-medium">Schedules</h2>
               <p className="text-sm text-muted-foreground">No tasks scheduled</p>
             </div>
+          </div>
+          <div className="flex gap-3">
+            <Link href="/tasks/new_task">
+              <Button className="bg-black text-white hover:bg-black/90">
+                New Task
+              </Button>
+            </Link>
+            <Link href="/tasks/new_task">
+              <Button variant={"outline"}>
+                New Schedule
+              </Button>
+            </Link>
           </div>
         </div>
       </SidebarInset>

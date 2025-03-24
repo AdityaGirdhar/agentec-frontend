@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sidebar"
 import Image from "next/image"
 import profileImg from "@/public/account.png"
+import { useEffect, useState } from "react"
 
 export function NavUser({
   user,
@@ -42,6 +43,16 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const [validAvatar, setValidAvatar] = useState(user.avatar)
+
+  useEffect(() => {
+    if (validAvatar) {
+      const img = new window.Image() // Explicitly use `window.Image`
+      img.src = validAvatar
+      img.onload = () => setValidAvatar(user.avatar) // Keep original if valid
+      img.onerror = () => setValidAvatar(profileImg.src) // Use fallback if error
+    }
+  }, [user.avatar])
 
   return (
     <SidebarMenu>

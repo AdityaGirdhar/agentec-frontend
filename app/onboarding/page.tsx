@@ -17,6 +17,15 @@ export default function OnboardingPage() {
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser)
+      setUser(parsedUser)
+      console.log("Retrieved user from localStorage:", parsedUser)
+    }
+  }, [])
+
+  useEffect(() => {
     const code = searchParams.get("code")
 
     if (!code) {
@@ -31,6 +40,8 @@ export default function OnboardingPage() {
 
         if (res.ok) {
           setUser(data.user)
+          localStorage.setItem("user", JSON.stringify(data.user))
+          console.log("Saved user to localStorage:", data.user)
           setStatus("success")
         } else {
           console.error(data)

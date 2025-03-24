@@ -23,8 +23,14 @@ export default function Page() {
   const [isBlurred, setIsBlurred] = useState(false)
 
   useEffect(() => {
+    if (localStorage.getItem("modalShown") === "false") {
     setShowModal(true)
     setIsBlurred(true)
+    localStorage.setItem("modalShown", "true")
+    } else {
+    setShowModal(false)
+    setIsBlurred(false);
+    }
   }, [])
 
   const handleModalClose = () => {
