@@ -35,16 +35,34 @@ export default function OnboardingPage() {
 
     const fetchUser = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/google/callback?code=${code}&env=frontend_local`)
-        const data = await res.json()
+        const callbackRes = await fetch(`http://localhost:8000/google/callback?code=${code}&env=frontend_local`)
+        const callbackData = await callbackRes.json()
 
-        if (res.ok) {
-          setUser(data.user)
-          localStorage.setItem("user", JSON.stringify(data.user))
-          console.log("Saved user to localStorage:", data.user)
+        if (!callbackRes.ok || !callbackData.refresh_token) {
+          console.error("Callback error or no refresh token:", callbackData)
+          setTimeout(() => setStatus("error"), 5000)
+          return
+        }
+
+        console.log("Refresh token:", callbackData.refresh_token)
+
+        const userInfoRes = await fetch(
+          `http://localhost:8000/google/get-user-info?refresh_token=${encodeURIComponent(callbackData.refresh_token)}`,
+          {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        )
+
+        const userInfoData = await userInfoRes.json()
+
+        if (userInfoRes.ok) {
+          setUser(userInfoData.user)
           setStatus("success")
         } else {
-          console.error(data)
+          console.error("User info fetch failed:", userInfoData)
           setTimeout(() => setStatus("error"), 5000)
         }
       } catch (err) {
