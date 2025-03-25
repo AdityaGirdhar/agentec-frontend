@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -24,16 +24,42 @@ import ReactMarkdown from "react-markdown"
 
 export default function Page() {
   const [prompt, setPrompt] = useState("")
+  const [name, setName] = useState("")
   const [output, setOutput] = useState("")
   const [loading, setLoading] = useState(false)
+  const [agents, setAgents] = useState<any[]>([])
+  const [keys, setKeys] = useState<any[]>([])
+  const [selectedAgent, setSelectedAgent] = useState("")
+  const [selectedKey, setSelectedKey] = useState("")
+  const [userEmail, setUserEmail] = useState("")
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser)
+      setUserEmail(parsed.email)
+
+      fetch(`http://localhost:8000/users/get_keys?email=${parsed.email}`)
+        .then(res => res.json())
+        .then(setKeys)
+    }
+
+    fetch("http://localhost:8000/agents/get_agents")
+      .then(res => res.json())
+      .then(setAgents)
+  }, [])
 
   const handleRunTask = async () => {
-    if (!prompt.trim()) return
+    if (!prompt.trim() || !selectedAgent || !selectedKey) return
+
     setLoading(true)
     setOutput("")
 
+    const agent = agents.find((a) => a.name === selectedAgent)
+    const keyName = keys.find(k => k.name === selectedKey)?.name || "Unknown"
+
     try {
-      const response = await fetch("http://localhost:8000/external_agents/analyst", {
+      const response = await fetch(`http://localhost:8000${agent.api_route}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -44,8 +70,25 @@ export default function Page() {
 
       const data = await response.json()
       setOutput(data.response)
-    } catch (error) {
+
+      await fetch("http://localhost:8000/users/add_task", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          name: name || `${selectedAgent} task`,
+          agent_used: selectedAgent,
+          key_used: keyName,
+          input_prompt: prompt,
+          task_output: data.response,
+        }),
+      })
+    } catch (err) {
       setOutput("Failed to fetch output.")
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -75,24 +118,42 @@ export default function Page() {
           <div className="flex-1 flex flex-row gap-4 p-4 pr-10">
             <div className="w-full md:w-1/4 bg-muted/50 p-4 rounded-xl flex flex-col gap-4">
               <div>
+                <Label className="mb-1 block">Task Name</Label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Give your task a name"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div>
                 <Label className="mb-1 block">Choose your agent</Label>
-                <Select>
+                <Select onValueChange={setSelectedAgent}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="finbot">Finbot</SelectItem>
+                    {agents.map((agent) => (
+                      <SelectItem key={agent.name} value={agent.name}>
+                        {agent.name.charAt(0).toUpperCase() + agent.name.slice(1)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className="mb-1 block">Choose key</Label>
-                <Select>
+                <Select onValueChange={setSelectedKey}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose default" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="main">Main</SelectItem>
+                    {keys.map((key) => (
+                      <SelectItem key={key.name} value={key.name}>
+                        {key.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -112,13 +173,15 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="w-full md:w-3/4 bg-muted/50 rounded-xl p-6 flex items-center justify-center text-center overflow-y-auto">
+            <div className="w-full md:w-3/4 bg-muted/50 rounded-xl p-6 overflow-y-auto">
               {loading ? (
                 <div className="text-muted-foreground text-lg">Loading output...</div>
               ) : output ? (
-                <ReactMarkdown className="prose w-full max-w-full">{output}</ReactMarkdown>
+                <ReactMarkdown className="prose w-full max-w-full text-left">{output}</ReactMarkdown>
               ) : (
-                <div className="text-muted-foreground text-lg">No Task Output</div>
+                <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full min-h-[300px]">
+                  No Task Output
+                </div>
               )}
             </div>
           </div>

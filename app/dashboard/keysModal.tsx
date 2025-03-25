@@ -1,5 +1,7 @@
-import * as React from "react";
-import { Button } from "@/components/ui/button";
+"use client"
+
+import * as React from "react"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -7,97 +9,139 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Eye, EyeOff, Trash, Edit } from "lucide-react";
+} from "@/components/ui/select"
+import { Eye, EyeOff, Trash, Edit } from "lucide-react"
 
 interface KeyEntry {
-  name: string;
-  key: string;
-  provider: string;
+  name: string
+  key: string
+  provider: string
 }
 
 export function KeysModal({ onClose }: { onClose: () => void }) {
   const [keys, setKeys] = React.useState<KeyEntry[]>(
     JSON.parse(localStorage.getItem("keys") || "[]")
-  );
-  const [showForm, setShowForm] = React.useState(false);
+  )
+  const [showForm, setShowForm] = React.useState(false)
   const [formData, setFormData] = React.useState<KeyEntry>({
     name: "",
     key: "",
     provider: "",
-  });
-  const [visibleKeys, setVisibleKeys] = React.useState<Record<number, boolean>>({});
-  const [editIndex, setEditIndex] = React.useState<number | null>(null);
+  })
+  const [visibleKeys, setVisibleKeys] = React.useState<Record<number, boolean>>({})
+  const [editIndex, setEditIndex] = React.useState<number | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
-  };
+    setFormData({ ...formData, [e.target.id]: e.target.value })
+  }
 
   const handleSelectChange = (value: string) => {
-    setFormData({ ...formData, provider: value });
-  };
+    setFormData({ ...formData, provider: value })
+  }
 
   const handleSubmit = () => {
-    if (!formData.name || !formData.key || !formData.provider) return;
-    let updatedKeys;
+    if (!formData.name || !formData.key || !formData.provider) return
+    let updatedKeys
     if (editIndex !== null) {
-      updatedKeys = [...keys];
-      updatedKeys[editIndex] = formData;
+      updatedKeys = [...keys]
+      updatedKeys[editIndex] = formData
     } else {
-      updatedKeys = [...keys, formData];
+      updatedKeys = [...keys, formData]
     }
-    setKeys(updatedKeys);
-    setShowForm(false);
-    setEditIndex(null);
-    setFormData({ name: "", key: "", provider: "" });
-  };
+    setKeys(updatedKeys)
+    setShowForm(false)
+    setEditIndex(null)
+    setFormData({ name: "", key: "", provider: "" })
+  }
 
   const toggleKeyVisibility = (index: number) => {
-    setVisibleKeys((prev) => ({ ...prev, [index]: !prev[index] }));
-  };
+    setVisibleKeys((prev) => ({ ...prev, [index]: !prev[index] }))
+  }
 
   const handleDelete = (index: number) => {
-    const updatedKeys = keys.filter((_, i) => i !== index);
-    setKeys(updatedKeys);
-  };
+    const updatedKeys = keys.filter((_, i) => i !== index)
+    setKeys(updatedKeys)
+  }
 
   const handleEdit = (index: number) => {
-    setFormData(keys[index]);
-    setEditIndex(index);
-    setShowForm(true);
-  };
+    setFormData(keys[index])
+    setEditIndex(index)
+    setShowForm(true)
+  }
 
   const handleAddNew = () => {
-    setFormData({ name: "", key: "", provider: "" });
-    setEditIndex(null);
-    setShowForm(true);
-  };
+    setFormData({ name: "", key: "", provider: "" })
+    setEditIndex(null)
+    setShowForm(true)
+  }
+
+  const handleCloseAndSync = async () => {
+    const storedUser = localStorage.getItem("user")
+    if (!storedUser) return
+
+    const { email } = JSON.parse(storedUser)
+
+    await Promise.all(
+      keys.map((entry) =>
+        fetch("http://localhost:8000/users/add_key", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            name: entry.name,
+            provider: entry.provider,
+            key: entry.key,
+          }),
+        })
+      )
+    )
+
+    onClose()
+  }
 
   return (
     <Card className="w-[500px] h-auto">
       <CardHeader>
         <CardTitle className="py-1 text-left">{showForm ? "Add Key" : "Your Keys"}</CardTitle>
-        {!showForm && <CardDescription className="text-left">Manage your AI provider keys.</CardDescription>}
+        {!showForm && (
+          <CardDescription className="text-left">
+            Manage your AI provider keys.
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent>
         {showForm ? (
           <div className="grid w-full items-center gap-2">
             <div className="flex flex-col space-y-1">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="Give a memorable name" value={formData.name} onChange={handleInputChange} />
+              <Input
+                id="name"
+                placeholder="Give a memorable name"
+                value={formData.name}
+                onChange={handleInputChange}
+              />
             </div>
             <div className="flex flex-col space-y-1">
               <Label htmlFor="key">Key</Label>
-              <Input id="key" type="password" placeholder="Enter your key" value={formData.key} onChange={handleInputChange} />
+              <Input
+                id="key"
+                type="password"
+                placeholder="Enter your key"
+                value={formData.key}
+                onChange={handleInputChange}
+              />
             </div>
             <div className="flex flex-col space-y-1">
               <Label htmlFor="provider">AI Provider</Label>
@@ -158,9 +202,21 @@ export function KeysModal({ onClose }: { onClose: () => void }) {
         )}
       </CardContent>
       <CardFooter className="flex justify-end space-x-2">
-        {showForm ? <Button onClick={() => setShowForm(false)} variant="outline">Cancel</Button> : <Button onClick={onClose} variant="outline">Close</Button>}
-        {showForm ? <Button onClick={handleSubmit}>Submit</Button> : <Button onClick={handleAddNew}>+ Add Key</Button>}
+        {showForm ? (
+          <Button onClick={() => setShowForm(false)} variant="outline">
+            Cancel
+          </Button>
+        ) : (
+          <Button onClick={handleCloseAndSync} variant="outline">
+            Close
+          </Button>
+        )}
+        {showForm ? (
+          <Button onClick={handleSubmit}>Submit</Button>
+        ) : (
+          <Button onClick={handleAddNew}>+ Add Key</Button>
+        )}
       </CardFooter>
     </Card>
-  );
+  )
 }

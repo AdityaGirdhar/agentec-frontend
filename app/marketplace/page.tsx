@@ -1,68 +1,73 @@
 'use client'
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { AppSidebar } from "@/components/app-sidebar";
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { Bookmark } from "lucide-react";
-import SearchBar from "./searchBar";
+} from "@/components/ui/sidebar"
+import { Bookmark } from "lucide-react"
+import SearchBar from "./searchBar"
 
-const agents = [
-  {
-    name: "Finbot",
-    description:
-      "An AI-powered financial assistant that helps analyze budgets, track spending, and give investment insights.",
-  },
-  {
-    name: "Stocktracker",
-    description:
-      "Monitors real-time stock performance, delivers alerts on market changes, and tracks portfolio movement.",
-  },
-  {
-    name: "ProAnalyst",
-    description:
-      "Performs deep analysis on business metrics, generates executive summaries, and identifies strategic opportunities.",
-  },
-];
+interface Agent {
+  name: string
+  description: string
+}
 
 export default function Page() {
-  const [bookmarked, setBookmarked] = useState<{ [key: string]: boolean }>({});
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [filteredAgents, setFilteredAgents] = useState(agents);
+  const [agents, setAgents] = useState<Agent[]>([])
+  const [filteredAgents, setFilteredAgents] = useState<Agent[]>([])
+  const [bookmarked, setBookmarked] = useState<{ [key: string]: boolean }>({})
+  const [userEmail, setUserEmail] = useState<string | null>(null)
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUserEmail(parsedUser.email);
-
-      const storedBookmarks = localStorage.getItem(`bookmarks-${parsedUser.email}`);
-      if (storedBookmarks) {
-        setBookmarked(JSON.parse(storedBookmarks));
+    const fetchAgents = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/agents/get_agents")
+        const data = await res.json()
+        const simplifiedAgents = data.map((agent: any) => ({
+          name: agent.name,
+          description: agent.description,
+        }))
+        setAgents(simplifiedAgents)
+        setFilteredAgents(simplifiedAgents)
+      } catch (err) {
+        console.error("Failed to fetch agents:", err)
       }
     }
-  }, []);
+
+    fetchAgents()
+
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser)
+      setUserEmail(parsedUser.email)
+
+      const storedBookmarks = localStorage.getItem(`bookmarks-${parsedUser.email}`)
+      if (storedBookmarks) {
+        setBookmarked(JSON.parse(storedBookmarks))
+      }
+    }
+  }, [])
 
   const toggleBookmark = (name: string) => {
     setBookmarked((prev) => {
-      const updatedBookmarks = { ...prev, [name]: !prev[name] };
+      const updated = { ...prev, [name]: !prev[name] }
       if (userEmail) {
-        localStorage.setItem(`bookmarks-${userEmail}`, JSON.stringify(updatedBookmarks));
+        localStorage.setItem(`bookmarks-${userEmail}`, JSON.stringify(updated))
       }
-      return updatedBookmarks;
-    });
-  };
+      return updated
+    })
+  }
 
   return (
     <SidebarProvider>
@@ -86,11 +91,16 @@ export default function Page() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold">Marketplace</h1>
           </div>
-          <SearchBar onSearch={(query) => {
-            setFilteredAgents(
-              agents.filter((agent) => agent.name.toLowerCase().includes(query.toLowerCase()))
-            );
-          }} />
+
+          <SearchBar
+            onSearch={(query) =>
+              setFilteredAgents(
+                agents.filter((a) =>
+                  a.name.toLowerCase().includes(query.toLowerCase())
+                )
+              )
+            }
+          />
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {filteredAgents.map((agent) => (
@@ -116,5 +126,5 @@ export default function Page() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }
