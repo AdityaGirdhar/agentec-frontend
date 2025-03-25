@@ -74,7 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: "Agents",
-        url: "/agents",
+        url: "#",
         icon: Bot,
       },
       {
