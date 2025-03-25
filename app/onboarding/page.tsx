@@ -15,12 +15,14 @@ export default function OnboardingPage() {
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
   const [user, setUser] = useState<any>(null)
+  const [showKeyModal, setShowKeyModal] = useState(false)
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user")
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser)
       setUser(parsedUser)
+      setShowKeyModal(true)
       console.log("Retrieved user from localStorage:", parsedUser)
     }
   }, [])
@@ -44,8 +46,6 @@ export default function OnboardingPage() {
           return
         }
 
-        console.log("Refresh token:", callbackData.refresh_token)
-
         const userInfoRes = await fetch(
           `http://localhost:8000/google/get-user-info?refresh_token=${encodeURIComponent(callbackData.refresh_token)}`,
           {
@@ -55,11 +55,21 @@ export default function OnboardingPage() {
             },
           }
         )
-
         const userInfoData = await userInfoRes.json()
 
         if (userInfoRes.ok) {
-          setUser(userInfoData.user)
+          console.log("User info fetched:", userInfoData)
+
+          const userData = {
+            name: userInfoData.user.name,
+            email: userInfoData.user.email,
+            profile: userInfoData.user.picture,
+          }
+
+          localStorage.setItem("user", JSON.stringify(userData))
+          localStorage.setItem("show_key_modal", "true")
+          setUser(userData)
+          setShowKeyModal(true)
           setStatus("success")
         } else {
           console.error("User info fetch failed:", userInfoData)
