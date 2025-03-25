@@ -56,7 +56,6 @@ export function KeysModal({ onClose }: { onClose: () => void }) {
       updatedKeys = [...keys, formData];
     }
     setKeys(updatedKeys);
-    localStorage.setItem("keys", JSON.stringify(updatedKeys));
     setShowForm(false);
     setEditIndex(null);
     setFormData({ name: "", key: "", provider: "" });
@@ -69,7 +68,6 @@ export function KeysModal({ onClose }: { onClose: () => void }) {
   const handleDelete = (index: number) => {
     const updatedKeys = keys.filter((_, i) => i !== index);
     setKeys(updatedKeys);
-    localStorage.setItem("keys", JSON.stringify(updatedKeys));
   };
 
   const handleEdit = (index: number) => {

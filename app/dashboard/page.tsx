@@ -26,7 +26,6 @@ export default function Page() {
     if (localStorage.getItem("show_key_modal") === "true") {
     setShowModal(true)
     setIsBlurred(true)
-    localStorage.setItem("show_key_modal", "false")
     } else {
     setShowModal(false)
     setIsBlurred(false);
@@ -34,6 +33,7 @@ export default function Page() {
   }, [])
 
   const handleModalClose = () => {
+    localStorage.setItem("show_key_modal", "false")
     setShowModal(false)
     setIsBlurred(false)
   }

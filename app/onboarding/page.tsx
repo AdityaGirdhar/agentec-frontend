@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import fullLogo from "@/public/full-logo.png"
 import Image from "next/image"
@@ -12,20 +12,11 @@ import { Building2, User } from "lucide-react"
 
 export default function OnboardingPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
   const [user, setUser] = useState<any>(null)
   const [showKeyModal, setShowKeyModal] = useState(false)
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user")
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser)
-      setUser(parsedUser)
-      setShowKeyModal(true)
-      console.log("Retrieved user from localStorage:", parsedUser)
-    }
-  }, [])
 
   useEffect(() => {
     const code = searchParams.get("code")
@@ -50,31 +41,56 @@ export default function OnboardingPage() {
           `http://localhost:8000/google/get-user-info?refresh_token=${encodeURIComponent(callbackData.refresh_token)}`,
           {
             method: "POST",
-            headers: {
-              Accept: "application/json",
-            },
+            headers: { Accept: "application/json" },
           }
         )
         const userInfoData = await userInfoRes.json()
 
-        if (userInfoRes.ok) {
-          console.log("User info fetched:", userInfoData)
-
-          const userData = {
-            name: userInfoData.user.name,
-            email: userInfoData.user.email,
-            profile: userInfoData.user.picture,
-          }
-
-          localStorage.setItem("user", JSON.stringify(userData))
-          localStorage.setItem("show_key_modal", "true")
-          setUser(userData)
-          setShowKeyModal(true)
-          setStatus("success")
-        } else {
+        if (!userInfoRes.ok) {
           console.error("User info fetch failed:", userInfoData)
           setTimeout(() => setStatus("error"), 5000)
+          return
         }
+
+        const userData = {
+          name: userInfoData.user.name,
+          email: userInfoData.user.email,
+          picture: userInfoData.user.picture,
+          refresh_token: callbackData.refresh_token,
+        }
+
+        // Check if user exists
+        const checkUserRes = await fetch(`http://localhost:8000/users/get_user?email=${userData.email}`)
+        if (checkUserRes.ok) {
+          localStorage.setItem("user", JSON.stringify(userData))
+          localStorage.setItem("show_key_modal", "false")
+          setUser(userData)
+          setShowKeyModal(false)
+          router.push("/dashboard")
+          return
+        }
+
+        // Else create user
+        const createUserRes = await fetch(`http://localhost:8000/users/create_user`, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userData),
+        })
+
+        if (!createUserRes.ok) {
+          console.error("Failed to create user")
+          setTimeout(() => setStatus("error"), 5000)
+          return
+        }
+
+        localStorage.setItem("user", JSON.stringify(userData))
+        localStorage.setItem("show_key_modal", "true")
+        setUser(userData)
+        setShowKeyModal(true)
+        setStatus("success")
       } catch (err) {
         console.error(err)
         setTimeout(() => setStatus("error"), 5000)
@@ -82,10 +98,10 @@ export default function OnboardingPage() {
     }
 
     fetchUser()
-  }, [searchParams])
+  }, [searchParams, router])
 
   const onGoogleLogin = () => {
-    window.location.href = "/dashboard"
+    router.push("/dashboard")
   }
 
   if (status === "loading") {
