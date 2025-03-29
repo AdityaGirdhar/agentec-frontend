@@ -87,11 +87,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "#",
         icon: CircleDollarSign,
       },
-      {
-        title: "Reports",
-        url: "#",
-        icon: ClipboardPlus,
-      },
     ],
   }
 

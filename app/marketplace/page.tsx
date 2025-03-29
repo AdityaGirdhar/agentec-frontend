@@ -118,7 +118,9 @@ export default function Page() {
                     color="black"
                   />
                 </button>
-                <h2 className="text-xl font-semibold mb-2">{agent.name}</h2>
+                <h2 className="text-xl font-semibold mb-2">
+                  {agent.name.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                </h2>
                 <p className="text-sm text-gray-600">{agent.description}</p>
               </div>
             ))}

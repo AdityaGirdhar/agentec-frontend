@@ -1,37 +1,31 @@
 'use client'
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
+import { useEffect, useState, useRef } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
+  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
+  SidebarInset, SidebarProvider, SidebarTrigger
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import ReactMarkdown from "react-markdown"
+import { Download } from "lucide-react"
 
 export default function Page() {
   const [prompt, setPrompt] = useState("")
   const [name, setName] = useState("")
-  const [output, setOutput] = useState("")
+  const [markdownText, setMarkdownText] = useState("")
+  const [renderCode, setRenderCode] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [agents, setAgents] = useState<any[]>([])
   const [keys, setKeys] = useState<any[]>([])
   const [selectedAgent, setSelectedAgent] = useState("")
   const [selectedKey, setSelectedKey] = useState("")
   const [userEmail, setUserEmail] = useState("")
+  const pdfRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user")
@@ -53,7 +47,8 @@ export default function Page() {
     if (!prompt.trim() || !selectedAgent || !selectedKey) return
 
     setLoading(true)
-    setOutput("")
+    setMarkdownText("")
+    setRenderCode([])
 
     const agent = agents.find((a) => a.name === selectedAgent)
     const keyName = keys.find(k => k.name === selectedKey)?.name || "Unknown"
@@ -69,7 +64,9 @@ export default function Page() {
       })
 
       const data = await response.json()
-      setOutput(data.response)
+
+      setMarkdownText(data.Markdown_Text)
+      setRenderCode(data.Render_Code)
 
       await fetch("http://localhost:8000/users/add_task", {
         method: "POST",
@@ -78,20 +75,32 @@ export default function Page() {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          email: userEmail,
-          name: name || `${selectedAgent} task`,
-          agent_used: selectedAgent,
+          user_email: userEmail,
+          name: name || `${agent.name} task`,
+          agent_name: agent.name,
           key_used: keyName,
           input_prompt: prompt,
-          task_output: data.response,
+          markdown_text: data.Markdown_Text,
+          render_code: data.Render_Code,
         }),
       })
     } catch (err) {
-      setOutput("Failed to fetch output.")
+      setMarkdownText("Failed to fetch output.")
       console.error(err)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleDownloadPDF = async () => {
+    const html2pdf = (await import("html2pdf.js")).default
+    if (!pdfRef.current) return
+    html2pdf().from(pdfRef.current).set({
+      margin: 0.5,
+      filename: `${name || "task"}.pdf`,
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+    }).save()
   }
 
   return (
@@ -99,7 +108,7 @@ export default function Page() {
       <AppSidebar />
       <SidebarInset>
         <div className="flex flex-col h-screen w-full">
-          <header className="flex h-16 shrink-0 items-center gap-2 px-4">
+          <header className="flex h-16 items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
@@ -115,71 +124,110 @@ export default function Page() {
             </Breadcrumb>
           </header>
 
-          <div className="flex-1 flex flex-row gap-4 p-4 pr-10">
-            <div className="w-full md:w-1/4 bg-muted/50 p-4 rounded-xl flex flex-col gap-4">
-              <div>
-                <Label className="mb-1 block">Task Name</Label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Give your task a name"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-              <div>
-                <Label className="mb-1 block">Choose your agent</Label>
-                <Select onValueChange={setSelectedAgent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {agents.map((agent) => (
-                      <SelectItem key={agent.name} value={agent.name}>
-                        {agent.name.charAt(0).toUpperCase() + agent.name.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="mb-1 block">Choose key</Label>
-                <Select onValueChange={setSelectedKey}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose default" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {keys.map((key) => (
-                      <SelectItem key={key.name} value={key.name}>
-                        {key.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-col flex-1">
-                <Label className="mb-1 block">Enter your prompt</Label>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Enter your task prompt"
-                  className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-              <div className="flex justify-end">
-                <Button className="bg-black text-white hover:bg-black/90" onClick={handleRunTask}>
-                  Run Task
+          <div className="px-6 pt-4">
+            <div className="grid md:grid-cols-3 gap-4">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Give your task a name"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <Select onValueChange={setSelectedAgent}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an agent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {agents.map((agent) => (
+                    <SelectItem key={agent.name} value={agent.name}>
+                      {agent.name.replace(/_/g, " ")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select onValueChange={setSelectedKey}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a key" />
+                </SelectTrigger>
+                <SelectContent>
+                  {keys.map((key) => (
+                    <SelectItem key={key.name} value={key.name}>
+                      {key.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-row gap-4 p-6 pr-10 overflow-hidden">
+            <div className="w-full md:w-1/4 bg-muted/50 p-4 rounded-xl flex flex-col gap-4 h-[calc(100vh-130px)] overflow-hidden">
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Enter your task prompt"
+                className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring overflow-y-auto scrollbar-thin"
+              />
+              <div className="flex justify-between gap-2">
+                <Button
+                  className="bg-black text-white hover:bg-black/90 w-full"
+                  onClick={handleRunTask}
+                  disabled={loading}
+                >
+                  {loading ? "Running..." : "Run Task"}
                 </Button>
+                {markdownText && (
+                  <Button variant="outline" onClick={handleDownloadPDF}>
+                    <Download size={16} />
+                  </Button>
+                )}
               </div>
             </div>
 
-            <div className="w-full md:w-3/4 bg-muted/50 rounded-xl p-6 overflow-y-auto">
+            <div className="w-full md:w-3/4 bg-muted/50 rounded-xl p-6 h-[calc(100vh-130px)] overflow-y-auto scrollbar-thin">
               {loading ? (
-                <div className="text-muted-foreground text-lg">Loading output...</div>
-              ) : output ? (
-                <ReactMarkdown className="prose w-full max-w-full text-left">{output}</ReactMarkdown>
+                <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full animate-pulse">
+                  Loading output...
+                </div>
+              ) : markdownText ? (
+                <>
+                  <ReactMarkdown className="prose w-full max-w-full text-left">
+                    {markdownText}
+                  </ReactMarkdown>
+                  {renderCode.map((html, index) => (
+                    <div
+                      key={index}
+                      className="mt-6 border rounded-lg p-4 bg-white"
+                      dangerouslySetInnerHTML={{ __html: html }}
+                    />
+                  ))}
+
+                  {/* Hidden PDF Content */}
+                  <div className="hidden">
+                    <div ref={pdfRef}>
+                      <div className="mb-4 text-sm">
+                        <p><strong>User:</strong> {userEmail}</p>
+                        <p><strong>Agent:</strong> {selectedAgent.replace(/_/g, " ")}</p>
+                        <p><strong>Key:</strong> {selectedKey}</p>
+                      </div>
+                      <hr className="my-4" />
+                      <h2 className="text-lg font-semibold mb-2">Prompt</h2>
+                      <p className="mb-4 whitespace-pre-wrap">{prompt}</p>
+                      <hr className="my-4" />
+                      <h2 className="text-lg font-semibold mb-2">Output</h2>
+                      <ReactMarkdown>{markdownText}</ReactMarkdown>
+                      {renderCode.map((html, index) => (
+                        <div
+                          key={index}
+                          style={{ marginTop: "1rem" }}
+                          dangerouslySetInnerHTML={{ __html: html }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </>
               ) : (
-                <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full min-h-[300px]">
+                <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full">
                   No Task Output
                 </div>
               )}
