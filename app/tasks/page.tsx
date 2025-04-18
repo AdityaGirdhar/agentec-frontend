@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { AppSidebar } from "@/components/app-sidebar"
+import accountIcon from "@/public/account.png"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -38,6 +39,38 @@ export default function Page() {
 
   const [sharedInfoMap, setSharedInfoMap] = useState<Record<string, SharedTask[]>>({})
   const [activeSharedModal, setActiveSharedModal] = useState<string | null>(null)
+  const [user, setUser] = useState<any>(null)
+
+  const [orgMembers, setOrgMembers] = useState<any[]>([])
+const [loadingOrgMembers, setLoadingOrgMembers] = useState(false)
+
+useEffect(() => {
+  const storedUser = localStorage.getItem("user")
+  if (!storedUser) return
+
+  const parsedUser = JSON.parse(storedUser)
+  setUser(parsedUser)
+  const stored = localStorage.getItem("user")
+  if (!stored) return
+  const user = JSON.parse(stored)
+  const orgId = user.organization
+  if (!orgId) return
+
+  const fetchMembers = async () => {
+    try {
+      setLoadingOrgMembers(true)
+      const res = await fetch(`http://localhost:8000/organizations/get_members?org_id=${orgId}&user_id=${user.id}`)
+      const data = await res.json()
+      setOrgMembers(data)
+    } catch (err) {
+      console.error("Failed to load members", err)
+    } finally {
+      setLoadingOrgMembers(false)
+    }
+  }
+
+  fetchMembers()
+}, [])
 
   const fetchTasks = async () => {
     const storedUser = localStorage.getItem("user")
@@ -182,7 +215,11 @@ export default function Page() {
             <div className="rounded-xl bg-muted/50 p-4">
               <h2 className="text-lg font-medium mb-2">Shared Tasks</h2>
               {sharedTasks.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No tasks shared with you</p>
+                <p className="text-sm text-muted-foreground">
+                  {user?.organization
+                    ? "No tasks shared with you"
+                    : "You are not part of any organization. Shared tasks will appear here once you join one."}
+                </p>
               ) : (
                 <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white shadow-sm">
                   {sharedTasks.map((task) => (
@@ -270,9 +307,12 @@ export default function Page() {
                             <Button
                               size="sm"
                               variant="outline"
-                              title="Share Task"
-                              onClick={() => setActiveSharedModal(task.id)}
+                              title={user?.organization ? "Share Task" : "Only Organization Members can share"}
+                              onClick={() => {
+                                if (user?.organization) setActiveSharedModal(task.id)
+                              }}
                               className="relative"
+                              disabled={!user?.organization}
                             >
                               <Share2 size={16} />
                               {sharedInfoMap[task.id]?.length > 0 && (
@@ -303,19 +343,38 @@ export default function Page() {
         {activeSharedModal && (
   <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
     <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
-      <h3 className="text-lg font-semibold mb-4">Shared With</h3>
+      <h2 className="text-lg font-semibold mb-4">Share Task</h2>
 
-      <ul className="space-y-3 max-h-64 overflow-y-auto pr-1">
-        {(sharedInfoMap[activeSharedModal] || []).map((share, idx) => (
-          <li key={share.id} className="text-sm text-muted-foreground">
-            <span className="font-medium">{share.reciever_name || "Unknown User"}</span>{" "}
-            — shared on{" "}
-            <span className="text-xs text-gray-500">
-              {new Date(share.created_time).toLocaleString()}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {!user?.organization ? (
+        <div className="text-sm text-muted-foreground">
+          You are not part of any organization. Sharing is unavailable.
+        </div>
+      ) : (
+        <>
+          {orgMembers === null ? (
+            <p className="text-sm text-muted-foreground">Loading members...</p>
+          ) : orgMembers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No other members found in your organization.</p>
+          ) : (
+            <ul className="space-y-3 max-h-64 overflow-y-auto pr-1">
+              {orgMembers.map((member: any) => (
+                <li
+                  key={member.id}
+                  className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md border"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{member.name}</p>
+                    <p className="text-xs text-muted-foreground">{member.email}</p>
+                  </div>
+                  <Button size="sm" variant="outline">
+                    Share
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
 
       <Button
         className="absolute top-3 right-3 text-sm px-2 py-1"
