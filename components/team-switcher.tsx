@@ -96,7 +96,7 @@ export function TeamSwitcher({
                 <div className="flex size-6 items-center justify-center rounded-md border bg-background">
                   <Plus className="size-4" />
                 </div>
-                <div className="font-medium text-muted-foreground">Join/Create Organization</div>
+                <div className="font-medium text-muted-foreground">Join or Create Organization</div>
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
