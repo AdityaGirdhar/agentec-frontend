@@ -8,15 +8,19 @@ import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Building2, User } from "lucide-react"
+import { Building2, User, ArrowLeft } from "lucide-react"
+import { Input } from "@/components/ui/input"
+
+type Step = "role" | "org_choice" | "create_org"
 
 export default function OnboardingPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
+  const [status, setStatus] = useState<"loading" | "success" | "error" | "org_created">("loading")
   const [user, setUser] = useState<any>(null)
-  const [showKeyModal, setShowKeyModal] = useState(false)
+  const [step, setStep] = useState<Step>("role")
+  const [orgName, setOrgName] = useState("")
 
   useEffect(() => {
     const code = searchParams.get("code")
@@ -53,24 +57,23 @@ export default function OnboardingPage() {
         }
 
         const userData = {
+          id: "",
           name: userInfoData.user.name,
           email: userInfoData.user.email,
           picture: userInfoData.user.picture,
           refresh_token: callbackData.refresh_token,
         }
 
-        // Check if user exists
         const checkUserRes = await fetch(`http://localhost:8000/users/get_user?email=${userData.email}`)
         if (checkUserRes.ok) {
+          userData.id = (await checkUserRes.json()).id
           localStorage.setItem("user", JSON.stringify(userData))
           localStorage.setItem("show_key_modal", "false")
           setUser(userData)
-          setShowKeyModal(false)
           router.push("/dashboard")
           return
         }
 
-        // Else create user
         const createUserRes = await fetch(`http://localhost:8000/users/create_user`, {
           method: "POST",
           headers: {
@@ -85,11 +88,11 @@ export default function OnboardingPage() {
           setTimeout(() => setStatus("error"), 5000)
           return
         }
-
+        const createdUserData = await createUserRes.json()
+        userData.id = createdUserData.id
         localStorage.setItem("user", JSON.stringify(userData))
         localStorage.setItem("show_key_modal", "true")
         setUser(userData)
-        setShowKeyModal(true)
         setStatus("success")
       } catch (err) {
         console.error(err)
@@ -100,8 +103,55 @@ export default function OnboardingPage() {
     fetchUser()
   }, [searchParams, router])
 
-  const onGoogleLogin = () => {
-    router.push("/dashboard")
+  const handleCreateOrganization = async () => {
+    const userData = JSON.parse(localStorage.getItem("user") || "{}")
+    const email = userData.email
+
+    if (!email || !orgName.trim()) {
+      console.error("Missing email or organization name.")
+      return
+    }
+
+    try {
+      const checkUserRes = await fetch(`http://localhost:8000/users/get_user?email=${email}`)
+      const user = await checkUserRes.json()
+
+      if (!user.id) {
+        console.error("User ID not found.")
+        return
+      }
+
+      const createOrgRes = await fetch("http://localhost:8000/organizations/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: orgName,
+          admin_id: user.id,
+          wallet: 0,
+        }),
+      })
+
+      if (!createOrgRes.ok) {
+        console.error("Failed to create organization")
+        return
+      }
+
+      const orgData = await createOrgRes.json()
+      console.log("Organization created:", orgData)
+      setStatus("org_created")
+      setTimeout(() => router.push("/dashboard"), 1500)
+    } catch (err) {
+      console.error("Error creating organization:", err)
+      setStatus("error")
+    }
+  }
+
+  const goBack = () => {
+    if (step === "create_org") setStep("org_choice")
+    else if (step === "org_choice") setStep("role")
   }
 
   if (status === "loading") {
@@ -120,6 +170,14 @@ export default function OnboardingPage() {
     )
   }
 
+  if (status === "org_created") {
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-muted">
+        <p className="text-lg text-green-600 font-medium">Organization Successfully Created</p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
@@ -129,25 +187,68 @@ export default function OnboardingPage() {
 
         <div className={cn("flex flex-col gap-6")}>
           <Card>
-            <CardHeader className="text-center">
+          <CardHeader className="relative text-center px-2">
+              <Button
+                variant="ghost"
+                className="absolute left-0 top-1 text-sm text-muted-foreground flex items-center gap-1"
+                onClick={goBack}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+
               <CardTitle className="text-xl">Welcome, {user?.name?.split(" ")[0]}</CardTitle>
-              <CardDescription>Who are you joining Agentec as?</CardDescription>
+              <CardDescription className="text-sm text-muted-foreground mt-1">
+                {{
+                  role: "Who are you joining Agentec as?",
+                  org_choice: "Choose an option to join as an organization",
+                  create_org: "Create your new organization",
+                }[step]}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col gap-4">
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href="/dashboard" onClick={onGoogleLogin}>
+              {step === "role" && (
+                <div className="flex flex-col gap-4">
+                  <Button variant="outline" className="w-full" onClick={() => setStep("org_choice")}>
                     <Building2 className="mr-2 h-4 w-4" />
-                    Organisation
-                  </Link>
-                </Button>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href="/dashboard" onClick={onGoogleLogin}>
-                    <User className="mr-2 h-4 w-4" />
-                    Individual
-                  </Link>
-                </Button>
-              </div>
+                    Organization
+                  </Button>
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/dashboard">
+                      <User className="mr-2 h-4 w-4" />
+                      Individual
+                    </Link>
+                  </Button>
+                </div>
+              )}
+
+              {step === "org_choice" && (
+                <div className="flex flex-col gap-4">
+                  <Button variant="outline" className="w-full" onClick={() => router.push("/organizations/join")}>
+                    Join Existing Organization
+                  </Button>
+                  <Button className="w-full" onClick={() => setStep("create_org")}>
+                    Create New Organization
+                  </Button>
+                </div>
+              )}
+
+              {step === "create_org" && (
+                <div className="flex flex-col gap-4">
+                  <Input
+                    placeholder="Organization name"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                  />
+                  <Button
+                    className="w-full"
+                    disabled={!orgName.trim()}
+                    onClick={handleCreateOrganization}
+                  >
+                    Continue
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

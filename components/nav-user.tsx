@@ -1,11 +1,9 @@
 "use client"
 
 import {
-  BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
+  BadgeCheck,
   Sparkles,
 } from "lucide-react"
 
@@ -47,10 +45,10 @@ export function NavUser({
 
   useEffect(() => {
     if (validAvatar) {
-      const img = new window.Image() // Explicitly use `window.Image`
+      const img = new window.Image()
       img.src = validAvatar
-      img.onload = () => setValidAvatar(user.avatar) // Keep original if valid
-      img.onerror = () => setValidAvatar(profileImg.src) // Use fallback if error
+      img.onload = () => setValidAvatar(user.avatar)
+      img.onerror = () => setValidAvatar(profileImg.src)
     }
   }, [user.avatar])
 
@@ -64,9 +62,10 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                {/* <AvatarFallback className="rounded-lg">CN</AvatarFallback> */}
-                <AvatarFallback className="rounded-lg"><Image src={profileImg} alt="" /></AvatarFallback>
+                <AvatarImage src={validAvatar} alt={user.name} />
+                <AvatarFallback className="rounded-lg">
+                  <Image src={profileImg} alt="fallback" />
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
@@ -84,9 +83,10 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg"><Image src={profileImg} alt="" /></AvatarFallback>
-                  {/* <AvatarFallback className="rounded-lg">CN</AvatarFallback> */}
+                  <AvatarImage src={validAvatar} alt={user.name} />
+                  <AvatarFallback className="rounded-lg">
+                    <Image src={profileImg} alt="fallback" />
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
@@ -94,31 +94,22 @@ export function NavUser({
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
+                <BadgeCheck className="mr-2 h-4 w-4" />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
+                <Sparkles className="mr-2 h-4 w-4" />
+                Report
               </DropdownMenuItem>
             </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuItem>
-              <LogOut />
+              <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
