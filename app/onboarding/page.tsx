@@ -62,6 +62,7 @@ export default function OnboardingPage() {
           email: userInfoData.user.email,
           picture: userInfoData.user.picture,
           refresh_token: callbackData.refresh_token,
+          organization: ""
         }
 
         const checkUserRes = await fetch(`http://localhost:8000/users/get_user?email=${userData.email}`)
