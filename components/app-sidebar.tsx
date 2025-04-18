@@ -76,7 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       const existingUser = JSON.parse(localStorage.getItem("user") || "{}")
       const userOrg = existingUser.organization || formatted[0]?.id || ""
-      
+
       localStorage.setItem("user", JSON.stringify({
         id: fullUser.id,
         name: fullUser.name,
@@ -142,13 +142,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const stored = localStorage.getItem("user")
       if (!stored) throw new Error("No user")
       const parsed = JSON.parse(stored)
-  
+
       if (!newOrgName.trim()) {
         setJoinStatus("error")
         setJoinMessage("Organization name is required")
         return
       }
-  
+
       const res = await fetch("http://localhost:8000/organizations/create", {
         method: "POST",
         headers: {
@@ -161,13 +161,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           wallet: 0,
         }),
       })
-  
+
       if (!res.ok) {
         setJoinStatus("error")
         setJoinMessage("Failed to create organization")
         return
       }
-  
+
       const data = await res.json()
       localStorage.setItem("user", JSON.stringify({ ...parsed, organization: data.id }))
       setShowDialog(false)
@@ -177,175 +177,106 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       setJoinMessage("Something went wrong.")
     }
   }
-  if (loading) {
-    return (<></>
-    )
-  }
+
+  if (loading) return null
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <Image className="pl-4 pt-8 pb-3 pr-14" src={fullLogo} alt="Logo" />
       <SidebarHeader>
-  {orgs.length > 0 ? (
-    <TeamSwitcher
-      teams={orgs}
-      currentTeam={selectedOrg}
-      onTeamChange={(team) => {
-        const stored = localStorage.getItem("user")
-        if (!stored) return
-        const parsed = JSON.parse(stored)
-        localStorage.setItem("user", JSON.stringify({ ...parsed, organization: team.id }))
-        setSelectedOrg(team)
-        location.reload()
-      }}
-      footerContent={
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 w-full justify-start"
+        {orgs.length > 0 ? (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1">
+              <TeamSwitcher
+                teams={orgs}
+                currentTeam={selectedOrg}
+                onTeamChange={(team) => {
+                  const stored = localStorage.getItem("user")
+                  if (!stored) return
+                  const parsed = JSON.parse(stored)
+                  localStorage.setItem("user", JSON.stringify({ ...parsed, organization: team.id }))
+                  setSelectedOrg(team)
+                  location.reload()
+                }}
+                footerContent={
+                  <Dialog open={showDialog} onOpenChange={setShowDialog}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2 w-full justify-start"
+                      >
+                        <Plus size={16} /> Join or Create Organization
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md [&_button[data-dialog-close]]:hidden">
+                      <DialogHeader>
+                        <DialogTitle className="text-lg">Join or Create Organization</DialogTitle>
+                      </DialogHeader>
+                      <div className="flex gap-2 mt-4">
+                        <button
+                          onClick={() => setJoinStatus("idle")}
+                          className={`flex-1 text-sm font-medium py-2 rounded-md border ${
+                            joinStatus !== "create" ? "bg-black text-white" : "bg-muted"
+                          }`}
+                        >
+                          Join
+                        </button>
+                        <button
+                          onClick={() => setJoinStatus("create")}
+                          className={`flex-1 text-sm font-medium py-2 rounded-md border ${
+                            joinStatus === "create" ? "bg-black text-white" : "bg-muted"
+                          }`}
+                        >
+                          Create
+                        </button>
+                      </div>
+                      {joinStatus !== "create" ? (
+                        <div className="mt-6 space-y-3">
+                          <p className="text-sm font-semibold text-gray-700">Join with Invite Token</p>
+                          <input
+                            type="text"
+                            placeholder="Enter invite token"
+                            value={inviteToken}
+                            onChange={(e) => setInviteToken(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                          />
+                          <Button onClick={handleJoin} className="w-full">
+                            Join
+                          </Button>
+                          {joinStatus === "success" && <p className="text-sm text-green-600">{joinMessage}</p>}
+                          {joinStatus === "error" && <p className="text-sm text-red-600">{joinMessage}</p>}
+                        </div>
+                      ) : (
+                        <div className="mt-6 space-y-4">
+                          <p className="text-sm font-semibold text-gray-700">Create a New Organization</p>
+                          <input
+                            type="text"
+                            placeholder="Organization Name"
+                            value={newOrgName}
+                            onChange={(e) => setNewOrgName(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                          />
+                          <Button className="w-full" onClick={handleCreateOrganization}>
+                            Create
+                          </Button>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                }
+              />
+            </div>
+            <button
+              title="Open Organization"
+              onClick={() => window.open(`/organizations/${selectedOrg?.id || ""}`, "_blank")}
+              className="p-2 hover:bg-muted rounded-md"
             >
-              <Plus size={16} /> Join or Create Organization
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md [&_button[data-dialog-close]]:hidden">
-  <DialogHeader>
-    <DialogTitle className="text-lg">Join or Create Organization</DialogTitle>
-  </DialogHeader>
-
-  <div className="flex gap-2 mt-4">
-    <button
-      onClick={() => setJoinStatus("idle")}
-      className={`flex-1 text-sm font-medium py-2 rounded-md border ${
-        joinStatus !== "create" ? "bg-black text-white" : "bg-muted"
-      }`}
-    >
-      Join
-    </button>
-    <button
-      onClick={() => setJoinStatus("create")}
-      className={`flex-1 text-sm font-medium py-2 rounded-md border ${
-        joinStatus === "create" ? "bg-black text-white" : "bg-muted"
-      }`}
-    >
-      Create
-    </button>
-  </div>
-
-  {joinStatus !== "create" ? (
-    <div className="mt-6 space-y-3">
-      <p className="text-sm font-semibold text-gray-700">Join with Invite Token</p>
-      <input
-        type="text"
-        placeholder="Enter invite token"
-        value={inviteToken}
-        onChange={(e) => setInviteToken(e.target.value)}
-        className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
-      />
-      <Button onClick={handleJoin} className="w-full">
-        Join
-      </Button>
-      {joinStatus === "success" && (
-        <p className="text-sm text-green-600">{joinMessage}</p>
-      )}
-      {joinStatus === "error" && (
-        <p className="text-sm text-red-600">{joinMessage}</p>
-      )}
-    </div>
-  ) : (
-    <div className="mt-6 space-y-4">
-      <p className="text-sm font-semibold text-gray-700">Create a New Organization</p>
-      <input
-        type="text"
-        placeholder="Organization Name"
-        value={newOrgName}
-        onChange={(e) => setNewOrgName(e.target.value)}
-        className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
-      />
-      <Button className="w-full" onClick={handleCreateOrganization}>
-        Create
-      </Button>
-    </div>
-  )}
-</DialogContent>
-        </Dialog>
-      }
-    />
-  ) : (
-    <Dialog open={showDialog} onOpenChange={setShowDialog}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2 w-full justify-start"
-        >
-          <Plus size={16} /> Join or Create Organization
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md [&_button[data-dialog-close]]:hidden">
-  <DialogHeader>
-    <DialogTitle className="text-lg">Join or Create Organization</DialogTitle>
-  </DialogHeader>
-
-  <div className="flex gap-2 mt-4">
-    <button
-      onClick={() => setJoinStatus("idle")}
-      className={`flex-1 text-sm font-medium py-2 rounded-md border ${
-        joinStatus !== "create" ? "bg-black text-white" : "bg-muted"
-      }`}
-    >
-      Join
-    </button>
-    <button
-      onClick={() => setJoinStatus("create")}
-      className={`flex-1 text-sm font-medium py-2 rounded-md border ${
-        joinStatus === "create" ? "bg-black text-white" : "bg-muted"
-      }`}
-    >
-      Create
-    </button>
-  </div>
-
-  {joinStatus !== "create" ? (
-    <div className="mt-6 space-y-3">
-      <p className="text-sm font-semibold text-gray-700">Join with Invite Token</p>
-      <input
-        type="text"
-        placeholder="Enter invite token"
-        value={inviteToken}
-        onChange={(e) => setInviteToken(e.target.value)}
-        className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
-      />
-      <Button onClick={handleJoin} className="w-full">
-        Join
-      </Button>
-      {joinStatus === "success" && (
-        <p className="text-sm text-green-600">{joinMessage}</p>
-      )}
-      {joinStatus === "error" && (
-        <p className="text-sm text-red-600">{joinMessage}</p>
-      )}
-    </div>
-  ) : (
-    <div className="mt-6 space-y-4">
-      <p className="text-sm font-semibold text-gray-700">Create a New Organization</p>
-      <input
-          type="text"
-          placeholder="Organization Name"
-          value={newOrgName}
-          onChange={(e) => setNewOrgName(e.target.value)}
-          className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
-        />
-      <Button className="w-full" onClick={handleCreateOrganization}>
-  Create
-</Button>
-    </div>
-  )}
-</DialogContent>
-    </Dialog>
-  )}
-</SidebarHeader>
+              <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+            </button>
+          </div>
+        ) : null}
+      </SidebarHeader>
 
       <SidebarContent>
         <NavMain items={navMain} />
