@@ -104,40 +104,52 @@ export default function TaskPage() {
             </Breadcrumb>
           </header>
 
-          <div className="px-6 pt-4 pb-2 flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                {editing ? (
-                  <div className="flex gap-2">
-                    <Input value={name} onChange={(e) => setName(e.target.value)} />
-                    <Button onClick={handleEditName} size="sm">Save</Button>
-                  </div>
-                ) : (
-                  <h1 className="text-2xl font-semibold flex items-center gap-2">
-                    {name}
-                    <Button variant="ghost" size="icon" onClick={() => setEditing(true)}>
-                      <Pencil size={16} />
-                    </Button>
-                  </h1>
-                )}
-                <div className="flex gap-2 ml-4">
-                  <Button size="sm" variant="outline"><Share2 size={16} /></Button>
-                  <Button size="sm" variant="outline" onClick={handleDownloadPDF}><Download size={16} /></Button>
-                  <Button size="sm" variant="outline" className="text-red-600 border-red-300"><Trash2 size={16} /></Button>
-                </div>
-              </div>
+          <div className="flex-1 flex flex-col gap-4 px-6 pt-4">
+  <div className="rounded-xl bg-muted/50 p-6">
+    <div className="flex justify-between items-center">
+      <div className="flex items-center gap-2">
+      {editing ? (
+          <div className="flex gap-2">
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <Button onClick={handleEditName} size="sm">Save</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setName(task?.name || "")
+                setEditing(false)
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <h1 className="text-2xl font-semibold flex items-center gap-2">
+            {name}
+            <Button variant="ghost" size="icon" onClick={() => setEditing(true)}>
+              <Pencil size={16} />
+            </Button>
+          </h1>
+        )}
+        <div className="flex gap-2 ml-4">
+          <Button size="sm" variant="outline"><Share2 size={16} /></Button>
+          <Button size="sm" variant="outline" onClick={handleDownloadPDF}><Download size={16} /></Button>
+          <Button size="sm" variant="outline" className="text-red-600 border-red-300"><Trash2 size={16} /></Button>
+        </div>
+      </div>
 
-              <div className="flex items-center gap-2">
-                <Label htmlFor="mode-toggle" className="text-sm">Management</Label>
-                <Switch
-                  id="mode-toggle"
-                  checked={managementMode}
-                  onCheckedChange={setManagementMode}
-                />
-              </div>
-            </div>
+      <div className="flex items-center gap-2">
+        <Label htmlFor="mode-toggle" className="text-sm">Management</Label>
+        <Switch
+          id="mode-toggle"
+          checked={managementMode}
+          onCheckedChange={setManagementMode}
+        />
+      </div>
+    </div>
+  </div>
 
-            <div className="flex-1 flex flex-col gap-4 p-2 pr-10">
+            <div className="flex-1 flex flex-col gap-4">
   <div className="flex-1 rounded-xl bg-muted/50 p-6 h-[calc(100vh-180px)]">
     {!managementMode ? (
       <div className="flex flex-col h-full gap-4">
