@@ -121,9 +121,9 @@ export default function TaskPage() {
                   </h1>
                 )}
                 <div className="flex gap-2 ml-4">
-                  <Button size="sm" variant="outline"><Share2 size={16} className="mr-1" /></Button>
-                  <Button size="sm" variant="outline" onClick={handleDownloadPDF}><Download size={16} className="mr-1" /></Button>
-                  <Button size="sm" variant="outline" className="text-red-600 border-red-300"><Trash2 size={16} className="mr-1" /></Button>
+                  <Button size="sm" variant="outline"><Share2 size={16} /></Button>
+                  <Button size="sm" variant="outline" onClick={handleDownloadPDF}><Download size={16} /></Button>
+                  <Button size="sm" variant="outline" className="text-red-600 border-red-300"><Trash2 size={16} /></Button>
                 </div>
               </div>
 
@@ -132,84 +132,92 @@ export default function TaskPage() {
                 <Switch
                   id="mode-toggle"
                   checked={managementMode}
-                  onCheckedChange={(val) => setManagementMode(val)}
+                  onCheckedChange={setManagementMode}
                 />
               </div>
             </div>
 
-            {!managementMode && (
-  <>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Select onValueChange={setSelectedAgent}>
-        <SelectTrigger>
-          <SelectValue placeholder="Choose an agent" />
-        </SelectTrigger>
-        <SelectContent>
-          {agents.map((agent) => (
-            <SelectItem key={agent.name} value={agent.name}>
-              {agent.name.replace(/_/g, " ")}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select onValueChange={setSelectedKey}>
-        <SelectTrigger>
-          <SelectValue placeholder="Choose a key" />
-        </SelectTrigger>
-        <SelectContent>
-          {keys.map((key) => (
-            <SelectItem key={key.name} value={key.name}>
-              {key.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+            <div className="flex-1 flex flex-col gap-4 p-2 pr-10">
+  <div className="flex-1 rounded-xl bg-muted/50 p-6 h-[calc(100vh-180px)]">
+    {!managementMode ? (
+      <div className="flex flex-col h-full gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Select onValueChange={setSelectedAgent}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choose an agent" />
+            </SelectTrigger>
+            <SelectContent>
+              {agents.map((agent) => (
+                <SelectItem key={agent.name} value={agent.name}>
+                  {agent.name.replace(/_/g, " ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select onValueChange={setSelectedKey}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choose a key" />
+            </SelectTrigger>
+            <SelectContent>
+              {keys.map((key) => (
+                <SelectItem key={key.name} value={key.name}>
+                  {key.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-    <div className="flex-1 flex flex-row gap-4 p-2 pr-10 overflow-hidden">
-      <div className="w-full md:w-1/4 bg-muted/50 p-4 rounded-xl flex flex-col gap-4 h-[calc(100vh-180px)] overflow-hidden">
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Enter your task prompt"
-          className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring overflow-y-auto scrollbar-thin"
-        />
-        <Button
-          className="bg-black text-white hover:bg-black/90 w-full"
-          onClick={() => {}}
-          disabled={loading}
-        >
-          Run Task
-        </Button>
-      </div>
+        <div className="flex flex-1 flex-row gap-4 overflow-hidden">
+          <div className="w-full md:w-1/4 p-2 rounded-xl flex flex-col gap-4 h-full overflow-hidden">
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Enter your task prompt"
+              className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring overflow-y-auto scrollbar-thin"
+            />
+            <Button
+              className="bg-black text-white hover:bg-black/90 w-full"
+              onClick={() => {}}
+              disabled={loading}
+            >
+              Run Task
+            </Button>
+          </div>
 
-      <div className="w-full md:w-3/4 bg-muted/50 rounded-xl p-6 h-[calc(100vh-180px)] overflow-y-auto scrollbar-thin">
-        {loading ? (
-          <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full animate-pulse">
-            Loading output...
+          <div className="w-full md:w-3/4 rounded-xl p-4 h-full overflow-y-auto scrollbar-thin bg-white">
+            {loading ? (
+              <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full animate-pulse">
+                Loading output...
+              </div>
+            ) : markdownText ? (
+              <>
+                <ReactMarkdown className="prose w-full max-w-full text-left">
+                  {markdownText}
+                </ReactMarkdown>
+                {renderCode.map((html, index) => (
+                  <div
+                    key={index}
+                    className="mt-6 border rounded-lg p-4 bg-white"
+                    dangerouslySetInnerHTML={{ __html: html }}
+                  />
+                ))}
+              </>
+            ) : (
+              <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full">
+                No Task Output
+              </div>
+            )}
           </div>
-        ) : markdownText ? (
-          <>
-            <ReactMarkdown className="prose w-full max-w-full text-left">
-              {markdownText}
-            </ReactMarkdown>
-            {renderCode.map((html, index) => (
-              <div
-                key={index}
-                className="mt-6 border rounded-lg p-4 bg-white"
-                dangerouslySetInnerHTML={{ __html: html }}
-              />
-            ))}
-          </>
-        ) : (
-          <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full">
-            No Task Output
-          </div>
-        )}
+        </div>
       </div>
-    </div>
-  </>
-)}
+    ) : (
+      <div className="flex-1 rounded-xl bg-muted/50 text-muted-foreground text-center flex items-center justify-center h-full">
+        Management View (coming soon)
+      </div>
+    )}
+  </div>
+</div>
           </div>
         </div>
       </SidebarInset>
