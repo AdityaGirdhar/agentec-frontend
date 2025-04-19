@@ -104,8 +104,8 @@ export default function TaskPage() {
             </Breadcrumb>
           </header>
 
-          <div className="flex-1 flex flex-col gap-4 px-6 pt-4">
-  <div className="rounded-xl bg-muted/50 p-6">
+          <div className="flex-1 flex flex-col gap-4 px-6 ">
+  <div className="rounded-xl bg-muted/50 p-4">
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-2">
       {editing ? (
@@ -149,8 +149,8 @@ export default function TaskPage() {
     </div>
   </div>
 
-            <div className="flex-1 flex flex-col gap-4">
-  <div className="flex-1 rounded-xl bg-muted/50 p-6 h-[calc(100vh-180px)]">
+  <div className="flex-1 flex flex-col mb-4">
+  <div className="flex-1 rounded-xl bg-muted/50 p-4">
     {!managementMode ? (
       <div className="flex flex-col h-full gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -180,48 +180,53 @@ export default function TaskPage() {
           </Select>
         </div>
 
-        <div className="flex flex-1 flex-row gap-4 overflow-hidden">
-          <div className="w-full md:w-1/4 p-2 rounded-xl flex flex-col gap-4 h-full overflow-hidden">
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Enter your task prompt"
-              className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring overflow-y-auto scrollbar-thin"
-            />
-            <Button
-              className="bg-black text-white hover:bg-black/90 w-full"
-              onClick={() => {}}
-              disabled={loading}
-            >
-              Run Task
-            </Button>
-          </div>
-
-          <div className="w-full md:w-3/4 rounded-xl p-4 h-full overflow-y-auto scrollbar-thin bg-white">
-            {loading ? (
-              <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full animate-pulse">
-                Loading output...
-              </div>
-            ) : markdownText ? (
-              <>
-                <ReactMarkdown className="prose w-full max-w-full text-left">
-                  {markdownText}
-                </ReactMarkdown>
-                {renderCode.map((html, index) => (
-                  <div
-                    key={index}
-                    className="mt-6 border rounded-lg p-4 bg-white"
-                    dangerouslySetInnerHTML={{ __html: html }}
-                  />
-                ))}
-              </>
-            ) : (
-              <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full">
-                No Task Output
-              </div>
-            )}
-          </div>
+        <div className="relative flex-1 overflow-hidden">
+  <div className="flex h-full">
+  <div className="w-full rounded-xl p-4 h-full overflow-y-auto scrollbar-thin bg-white pb-32">
+      {loading ? (
+        <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full animate-pulse">
+          Loading output...
         </div>
+      ) : markdownText ? (
+        <>
+          <ReactMarkdown className="prose w-full max-w-full text-left">
+            {markdownText}
+          </ReactMarkdown>
+          {renderCode.map((html, index) => (
+            <div
+              key={index}
+              className="mt-6 border rounded-lg p-4 bg-white"
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          ))}
+        </>
+      ) : (
+      <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full w-full px-4">
+          No Task Output
+        </div>
+      )}
+    </div>
+  </div>
+
+  {/* Fixed prompt input at the bottom */}
+  <div className="absolute bottom-0 left-0 w-full py-2 border-t bg-muted/50">
+    <div className="flex items-center gap-2">
+      <textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder="Ask something..."
+        className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring overflow-y-auto scrollbar-thin"
+      />
+      <Button
+        className="bg-black text-white hover:bg-black/90"
+        onClick={() => {}}
+        disabled={loading}
+      >
+        Send
+      </Button>
+    </div>
+  </div>
+</div>
       </div>
     ) : (
       <div className="flex-1 rounded-xl bg-muted/50 text-muted-foreground text-center flex items-center justify-center h-full">
