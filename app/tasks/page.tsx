@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { AppSidebar } from "@/components/app-sidebar"
 import accountIcon from "@/public/account.png"
+import { useRouter } from "next/navigation"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -34,15 +35,16 @@ interface SharedTask {
 }
 
 export default function Page() {
+  const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [sharedTasks, setSharedTasks] = useState<SharedTask[]>([])
 
   const [sharedInfoMap, setSharedInfoMap] = useState<Record<string, SharedTask[]>>({})
   const [activeSharedModal, setActiveSharedModal] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
-
+  const [creatingTask, setCreatingTask] = useState(false)
   const [orgMembers, setOrgMembers] = useState<any[]>([])
-const [loadingOrgMembers, setLoadingOrgMembers] = useState(false)
+  const [loadingOrgMembers, setLoadingOrgMembers] = useState(false)
 
 useEffect(() => {
   const storedUser = localStorage.getItem("user")
@@ -71,6 +73,31 @@ useEffect(() => {
 
   fetchMembers()
 }, [])
+
+const handleCreateNewTask = async () => {
+  const storedUser = localStorage.getItem("user")
+  if (!storedUser) return
+
+  const { id: user_id } = JSON.parse(storedUser)
+
+  try {
+    setCreatingTask(true)
+    const res = await fetch("http://localhost:8000/tasks/create-task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id, name: "" }),
+    })
+
+    const data = await res.json()
+    if (!res.ok) throw new Error("Failed to create task")
+
+    router.push(`/tasks/${data.id}`)
+  } catch (err) {
+    console.error("Error creating task:", err)
+  } finally {
+    setCreatingTask(false)
+  }
+}
 
   const fetchTasks = async () => {
     const storedUser = localStorage.getItem("user")
@@ -262,12 +289,40 @@ useEffect(() => {
           </div>
 
           <div className="flex gap-3">
-            <Link href="/tasks/new_task">
-              <Button className="bg-black text-white hover:bg-black/90">New Task</Button>
-            </Link>
-            <Link href="/tasks/new_task">
-              <Button variant="outline">New Schedule</Button>
-            </Link>
+          <Button
+              className="bg-black text-white hover:bg-black/90"
+              onClick={handleCreateNewTask}
+              disabled={creatingTask}
+            >
+              {creatingTask ? (
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="animate-spin h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    ></path>
+                  </svg>
+                  Creating New Task...
+                </div>
+              ) : (
+                "New Task"
+              )}
+            </Button>
+            <Button variant="outline">New Schedule</Button>
           </div>
 
           {tasks.length > 0 && (
