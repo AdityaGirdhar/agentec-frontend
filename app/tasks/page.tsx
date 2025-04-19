@@ -348,7 +348,12 @@ const handleCreateNewTask = async () => {
                         </td>
                         <td className="p-2 text-right">
                           <div className="flex justify-end gap-2">
-                            <Button size="sm" variant="outline" title="View Task">
+                          <Button
+                              size="sm"
+                              variant="outline"
+                              title="View Task"
+                              onClick={() => router.push(`/tasks/${task.id}`)}
+                            >
                               <Eye size={16} />
                             </Button>
                             <Button
