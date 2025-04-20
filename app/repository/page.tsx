@@ -86,7 +86,6 @@ export default function RepositoryPage() {
                 <table className="w-full text-sm border-collapse">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="text-left p-3">ID</th>
                       <th className="text-left p-3">Name</th>
                       <th className="text-left p-3">Provider</th>
                       <th className="text-left p-3">Cost</th>
@@ -95,7 +94,6 @@ export default function RepositoryPage() {
                   <tbody>
                     {agents.map((agent) => (
                       <tr key={agent.id} className="border-t hover:bg-gray-50">
-                        <td className="p-3 break-all">{agent.id}</td>
                         <td className="p-3">{agent.name}</td>
                         <td className="p-3">{agent.provider.join(", ")}</td>
                         <td className="p-3">${agent.cost_per_execution}</td>
