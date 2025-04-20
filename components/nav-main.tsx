@@ -12,35 +12,32 @@ import {
 } from "@/components/ui/sidebar"
 
 export function NavMain({
+  title,
   items,
 }: {
+  title: string
   items: {
     title: string
     url: string
     icon?: LucideIcon
-    isActive?: boolean
-    items?: {
-      title: string
-      url: string
-    }[]
   }[]
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>{title}</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
-          <div key={item.title}>
-            <SidebarMenuItem>
+        {items
+          .filter((item) => item.url)
+          .map((item) => (
+            <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild tooltip={item.title}>
                 <Link href={item.url} className="flex items-center gap-2 w-full">
-                  {item.icon && <item.icon />}
+                  {item.icon && <item.icon className="w-4 h-4" />}
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          </div>
-        ))}
+          ))}
       </SidebarMenu>
     </SidebarGroup>
   )

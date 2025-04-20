@@ -10,7 +10,9 @@ import {
   ShoppingCart,
   Plus,
   Eye,
+  Bug,
 } from "lucide-react"
+
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -96,12 +98,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [])
 
   const navMain = [
-    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { title: "Tasks", url: "/tasks", icon: CircleCheckBig },
-    { title: "Agents", url: "/agents", icon: Bot },
-    { title: "Marketplace", url: "/marketplace", icon: ShoppingCart },
-    { title: "Budgets", url: "/budgets", icon: CircleDollarSign },
+    {
+      title: "Platform",
+      items: [
+        { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+        { title: "Tasks", url: "/tasks", icon: CircleCheckBig },
+        { title: "Agents", url: "/agents", icon: Bot },
+        { title: "Marketplace", url: "/marketplace", icon: ShoppingCart },
+        { title: "Budgets", url: "/budgets", icon: CircleDollarSign },
+      ],
+    },
+    {
+      title: "Developer",
+      items: [
+        { title: "Your Agents", url: "/your-agents", icon: Bot },
+        { title: "Bugs", url: "/bugs", icon: Bug },
+      ],
+    },
   ]
+  
+  if (user?.email === "admin@agentec.dev") {
+    navMain.push({
+      title: "Admin",
+      items: [
+        { title: "Console", url: "/console", icon: LayoutDashboard },
+      ],
+    })
+  }
 
   const handleJoin = async () => {
     try {
@@ -346,7 +369,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 </SidebarHeader>
 
       <SidebarContent>
-        <NavMain items={navMain} />
+        {navMain.map((section) => (
+          <NavMain key={section.title} items={section.items} title={section.title} />
+        ))}
       </SidebarContent>
 
       <SidebarFooter>
