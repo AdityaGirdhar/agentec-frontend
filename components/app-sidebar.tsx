@@ -11,6 +11,7 @@ import {
   Plus,
   Eye,
   Bug,
+  FolderGit2,
 } from "lucide-react"
 
 
@@ -103,7 +104,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
         { title: "Tasks", url: "/tasks", icon: CircleCheckBig },
-        { title: "Agents", url: "/agents", icon: Bot },
+        { title: "Repository", url: "/repository", icon: FolderGit2 },
         { title: "Marketplace", url: "/marketplace", icon: ShoppingCart },
         { title: "Budgets", url: "/budgets", icon: CircleDollarSign },
       ],
