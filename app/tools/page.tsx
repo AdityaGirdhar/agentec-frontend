@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 
 interface BugItem {
   name: string
@@ -44,12 +45,19 @@ interface Agent {
   name: string
 }
 
-export default function BugsPage() {
+export default function ToolsPage() {
   const [bugs, setBugs] = useState<BugItem[]>([])
   const [users, setUsers] = useState<{ [key: string]: User }>({})
   const [agents, setAgents] = useState<{ [key: string]: Agent }>({})
   const [statusMap, setStatusMap] = useState<{ [key: string]: string }>({})
   const [userId, setUserId] = useState<string | null>(null)
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false)
+  const [onboardingForm, setOnboardingForm] = useState({
+    name: "",
+    description: "",
+    developer_contact: "",
+    url: ""
+  })
 
   useEffect(() => {
     const fetchData = async () => {
@@ -113,14 +121,19 @@ export default function BugsPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="#">Bugs</BreadcrumbLink>
+                <BreadcrumbLink href="#">Tools</BreadcrumbLink>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </header>
 
         <div className="flex flex-col gap-4 px-6 pb-10">
-          <h1 className="text-2xl font-semibold pt-2">Bug Reports</h1>
+          <div className="flex items-center justify-between pt-2">
+            <h1 className="text-2xl font-semibold">Bug Reports</h1>
+            <Button onClick={() => setShowOnboardingModal(true)}>
+              Initiate Agent Onboarding
+            </Button>
+          </div>
 
           {bugs.length === 0 ? (
             <p className="text-sm text-muted-foreground mt-4">No bugs found for your agents.</p>
@@ -180,6 +193,67 @@ export default function BugsPage() {
             </div>
           )}
         </div>
+
+        {showOnboardingModal && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
+              <h2 className="text-lg font-semibold mb-4">Onboard New Agent</h2>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Agent Name"
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  value={onboardingForm.name}
+                  onChange={(e) => setOnboardingForm({ ...onboardingForm, name: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Description"
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  value={onboardingForm.description}
+                  onChange={(e) => setOnboardingForm({ ...onboardingForm, description: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Developer Contact"
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  value={onboardingForm.developer_contact}
+                  onChange={(e) => setOnboardingForm({ ...onboardingForm, developer_contact: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="URL"
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  value={onboardingForm.url}
+                  onChange={(e) => setOnboardingForm({ ...onboardingForm, url: e.target.value })}
+                />
+              </div>
+
+              <div className="mt-6 flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setShowOnboardingModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    try {
+                      await fetch("http://localhost:8000/agents/create_onboarding_info", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(onboardingForm),
+                      })
+                      setShowOnboardingModal(false)
+                      setOnboardingForm({ name: "", description: "", developer_contact: "", url: "" })
+                    } catch (err) {
+                      console.error("Failed to create onboarding info", err)
+                    }
+                  }}
+                >
+                  Submit
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </SidebarInset>
     </SidebarProvider>
   )

@@ -239,9 +239,9 @@ export default function RepositoryPage() {
                             >
                               <Copy size={16} />
                             </Button>
-                            <Button size="sm" variant="ghost" title="Share Key">
+                            {/* <Button size="sm" variant="ghost" title="Share Key">
                               <Share size={16} />
-                            </Button>
+                            </Button> */}
                           </td>
                         </tr>
                       )

@@ -38,6 +38,9 @@ export default function TaskPage() {
   const [keyNames, setKeyNames] = useState<{ [id: string]: string }>({})
   const pdfRef = useRef<HTMLDivElement>(null)
   const [totalCost, setTotalCost] = useState<number | null>(null)
+  const [activeSharedModal, setActiveSharedModal] = useState<string | null>(null)
+  const [orgMembers, setOrgMembers] = useState<any[]>([])
+  const [sharedInfoMap, setSharedInfoMap] = useState<Record<string, any[]>>({})
 
   const enrichExecutionMetadata = async (execs: any[]) => {
     const newAgentNames: any = {}
@@ -106,7 +109,7 @@ export default function TaskPage() {
         })
         .catch(() => console.error("Failed to load task info"))
 
-        fetch(`http://localhost:8000/tasks/get-executions?user_id=${JSON.parse(localStorage.getItem("user") || "{}").id}&task_id=${taskUUID}`)
+        fetch(`http://localhost:8000/tasks/get-executions?task_id=${taskUUID}`)
         .then(res => res.json())
         .then(data => {
           const execData = Array.isArray(data) ? data : []
@@ -118,6 +121,29 @@ export default function TaskPage() {
         .then(res => res.json())
         .then(data => setTotalCost(data.total_cost))
         .catch(err => console.error("Failed to fetch total cost", err))
+
+
+        const stored = localStorage.getItem("user")
+  if (stored) {
+    const parsed = JSON.parse(stored)
+    const orgId = parsed.organization
+    if (orgId) {
+      fetch(`http://localhost:8000/organizations/get_members?org_id=${orgId}&user_id=${parsed.id}`)
+        .then(res => res.json())
+        .then(setOrgMembers)
+    }
+
+    fetch(`http://localhost:8000/tasks/fetch-tasks-you-shared?user_id=${parsed.id}`)
+      .then(res => res.json())
+      .then(data => {
+        const grouped: Record<string, any[]> = {}
+        for (const item of data) {
+          if (!grouped[item.task_id]) grouped[item.task_id] = []
+          grouped[item.task_id].push(item)
+        }
+        setSharedInfoMap(grouped)
+      })
+  }
       
     }
     
@@ -159,7 +185,7 @@ export default function TaskPage() {
         }),
       })
 
-      const executionsRes = await fetch(`http://localhost:8000/tasks/get-executions?user_id=${userId}&task_id=${taskUUID}`)
+      const executionsRes = await fetch(`http://localhost:8000/tasks/get-executions?task_id=${taskUUID}`)
       const executionsData = await executionsRes.json()
       setExecutions(executionsData)
     } catch (err) {
@@ -248,9 +274,27 @@ export default function TaskPage() {
     <div className="text-sm min-w-[80px] text-right">
       {totalCost !== null ? `$${totalCost.toFixed(2)}` : '...'}
     </div>
-    <Button size="sm" variant="outline"><Share2 size={16} /></Button>
-    <Button size="sm" variant="outline" onClick={handleDownloadPDF}><Download size={16} /></Button>
-    <Button size="sm" variant="outline" className="text-red-600 border-red-300"><Trash2 size={16} /></Button>
+    <Button size="sm" variant="outline" onClick={() => setActiveSharedModal(taskUUID)}>
+  <Share2 size={16} />
+</Button>
+    {/* <Button size="sm" variant="outline" onClick={handleDownloadPDF}><Download size={16} /></Button> */}
+    <Button
+  size="sm"
+  variant="outline"
+  className="text-red-600 border-red-300"
+  onClick={async () => {
+    try {
+      const res = await fetch(`http://localhost:8000/tasks/delete-task?task_id=${taskUUID}`, {
+        method: "DELETE",
+      })
+      if (res.ok) window.location.href = "/tasks"
+    } catch (err) {
+      console.error("Delete failed", err)
+    }
+  }}
+>
+  <Trash2 size={16} />
+</Button>
   </div>
 </div>
 
@@ -358,6 +402,69 @@ export default function TaskPage() {
 </div>
           </div>
         </div>
+        {activeSharedModal && (
+  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
+      <h2 className="text-lg font-semibold mb-4">Share Task</h2>
+
+      <ul className="space-y-3 max-h-64 overflow-y-auto pr-1">
+        {orgMembers.map((member: any) => (
+          <li
+            key={member.id}
+            className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md border"
+          >
+            <div>
+              <p className="text-sm font-medium">{member.name}</p>
+              <p className="text-xs text-muted-foreground">{member.email}</p>
+            </div>
+
+            {sharedInfoMap[activeSharedModal || ""]?.some(s => s.reciever_id === member.id) ? (
+              <Button size="sm" variant="outline" disabled>Shared</Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    const res = await fetch("http://localhost:8000/tasks/share-task", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        sender_id: userId,
+                        reciever_id: member.id,
+                        task_id: activeSharedModal,
+                      }),
+                    })
+
+                    const data = await res.json()
+                    if (data.shared) {
+                      const updated = [...(sharedInfoMap[activeSharedModal || ""] || []), { reciever_id: member.id }]
+                      setSharedInfoMap(prev => ({ ...prev, [activeSharedModal!]: updated }))
+                    }
+                  } catch (err) {
+                    console.error("Failed to share task", err)
+                  }
+                }}
+              >
+                Share
+              </Button>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      <Button
+        className="absolute top-3 right-3 text-sm px-2 py-1"
+        variant="ghost"
+        onClick={() => setActiveSharedModal(null)}
+      >
+        Close
+      </Button>
+    </div>
+  </div>
+)}
       </SidebarInset>
     </SidebarProvider>
   )

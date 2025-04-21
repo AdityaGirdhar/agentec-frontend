@@ -114,8 +114,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Developer",
       items: [
-        { title: "Your Agents", url: "/your-agents", icon: Bot },
-        { title: "Bugs", url: "/bugs", icon: Bug },
+        // { title: "Your Agents", url: "/your-agents", icon: Bot },
+        { title: "Tools", url: "/tools", icon: Bug },
       ],
     },
   ]

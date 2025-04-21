@@ -201,9 +201,10 @@ const handleCreateNewTask = async () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/users/delete_task?task_id=${id}`, {
+      const res = await fetch(`http://localhost:8000/tasks/delete-task?task_id=${id}`, {
         method: "DELETE",
       })
+  
       if (res.ok) {
         setTasks(prev => prev.filter(task => task.id !== id))
       }
@@ -261,9 +262,14 @@ const handleCreateNewTask = async () => {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" title="View Task">
-                          <Eye size={16} />
-                        </Button>
+                      <Button
+  size="sm"
+  variant="outline"
+  title="View Task"
+  onClick={() => router.push(`/tasks/${task.task_id}`)}
+>
+  <Eye size={16} />
+</Button>
                         {/* <Button
                           size="sm"
                           variant="outline"
@@ -417,7 +423,9 @@ const handleCreateNewTask = async () => {
             <p className="text-sm text-muted-foreground">No other members found in your organization.</p>
           ) : (
             <ul className="space-y-3 max-h-64 overflow-y-auto pr-1">
-              {orgMembers.map((member: any) => (
+              {orgMembers
+    .filter(member => member.id !== user?.id)
+    .map((member: any) => (
                 <li
                   key={member.id}
                   className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md border"
@@ -426,38 +434,40 @@ const handleCreateNewTask = async () => {
                     <p className="text-sm font-medium">{member.name}</p>
                     <p className="text-xs text-muted-foreground">{member.email}</p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={async () => {
-                      try {
-                        const res = await fetch("http://localhost:8000/tasks/share-task", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({
-                            sender_id: user.id,
-                            reciever_id: member.id,
-                            task_id: activeSharedModal,
-                          }),
-                        })
+                  {sharedInfoMap[activeSharedModal || ""]?.some(s => s.reciever_id === member.id) ? (
+  <Button size="sm" variant="outline" disabled>
+    Shared
+  </Button>
+) : (
+  <Button
+    size="sm"
+    variant="outline"
+    onClick={async () => {
+      try {
+        const res = await fetch("http://localhost:8000/tasks/share-task", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sender_id: user.id,
+            reciever_id: member.id,
+            task_id: activeSharedModal,
+          }),
+        })
 
-                        const data = await res.json()
-                        if (data.shared) {
-                          alert(`Task shared with ${member.name}`)
-                          fetchTasks()
-                        } else {
-                          alert(`Task already shared with ${member.name}`)
-                        }
-                      } catch (err) {
-                        console.error("Failed to share task", err)
-                        alert("Error sharing task")
-                      }
-                    }}
-                  >
-                    Share
-                  </Button>
+        const data = await res.json()
+        if (data.shared) {
+          fetchTasks()
+        } 
+      } catch (err) {
+        console.error("Failed to share task", err)
+      }
+    }}
+  >
+    Share
+  </Button>
+)}
                 </li>
               ))}
             </ul>
