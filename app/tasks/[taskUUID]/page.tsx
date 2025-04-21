@@ -36,19 +36,41 @@ export default function TaskPage() {
   const pdfRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user")
-    if (storedUser) {
+    const fetchData = async () => {
+      const storedUser = localStorage.getItem("user")
+      if (!storedUser) return
+  
       const parsed = JSON.parse(storedUser)
       setUserEmail(parsed.email)
-      fetch(`http://localhost:8000/users/get_keys?email=${parsed.email}`)
-        .then(res => res.json())
-        .then(setKeys)
+  
+      try {
+        // ✅ Fetch keys using user_id
+        const keysRes = await fetch(`http://localhost:8000/users/get_keys?user_id=${parsed.id}`)
+        const keysData = await keysRes.json()
+        setKeys(Array.isArray(keysData) ? keysData : [])
+  
+        // ✅ Fetch saved agent IDs
+        const savedAgentsRes = await fetch(`http://localhost:8000/users/get_saved_agents?user_id=${parsed.id}`)
+        const savedAgentIds: string[] = await savedAgentsRes.json()
+  
+        // ✅ Fetch each agent's info
+        const agentDetails = await Promise.all(
+          savedAgentIds.map(async (agentId) => {
+            const res = await fetch(`http://localhost:8000/agents/get_agent_info?agent_id=${agentId}`)
+            return res.ok ? await res.json() : null
+          })
+        )
+  
+        setAgents(agentDetails.filter(Boolean))
+      } catch (err) {
+        console.error("Failed to fetch keys or agents", err)
+        setAgents([])
+        setKeys([])
+      }
     }
-
-    fetch("http://localhost:8000/agents/get_agents")
-      .then(res => res.json())
-      .then(setAgents)
-
+  
+    fetchData()
+  
     if (taskUUID) {
       fetch(`http://localhost:8000/tasks/get-task-info?task_id=${taskUUID}`)
         .then(res => res.json())
@@ -56,6 +78,7 @@ export default function TaskPage() {
           setTask(data)
           setName(data.name)
         })
+        .catch(() => console.error("Failed to load task info"))
     }
   }, [taskUUID])
 
@@ -154,30 +177,39 @@ export default function TaskPage() {
     {!managementMode ? (
       <div className="flex flex-col h-full gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select onValueChange={setSelectedAgent}>
-            <SelectTrigger>
-              <SelectValue placeholder="Choose an agent" />
-            </SelectTrigger>
-            <SelectContent>
-              {agents.map((agent) => (
-                <SelectItem key={agent.name} value={agent.name}>
-                  {agent.name.replace(/_/g, " ")}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select onValueChange={setSelectedKey}>
-            <SelectTrigger>
-              <SelectValue placeholder="Choose a key" />
-            </SelectTrigger>
-            <SelectContent>
-              {keys.map((key) => (
-                <SelectItem key={key.name} value={key.name}>
-                  {key.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Select onValueChange={setSelectedAgent}>
+  <SelectTrigger>
+    <SelectValue placeholder="Choose an agent" />
+  </SelectTrigger>
+  <SelectContent>
+    {agents.length > 0 ? (
+      agents.map((agent) => (
+        <SelectItem key={agent.id} value={agent.id}>
+          {agent.name.replace(/_/g, " ")}
+        </SelectItem>
+      ))
+    ) : (
+      <div className="text-sm text-muted-foreground px-3 py-1">No agents found</div>
+    )}
+  </SelectContent>
+</Select>
+
+<Select onValueChange={setSelectedKey}>
+  <SelectTrigger>
+    <SelectValue placeholder="Choose a key" />
+  </SelectTrigger>
+  <SelectContent>
+    {keys.length > 0 ? (
+      keys.map((key) => (
+        <SelectItem key={key.id} value={key.id}>
+          {key.name}
+        </SelectItem>
+      ))
+    ) : (
+      <div className="text-sm text-muted-foreground px-3 py-1">No keys found</div>
+    )}
+  </SelectContent>
+</Select>
         </div>
 
         <div className="relative flex-1 overflow-hidden">

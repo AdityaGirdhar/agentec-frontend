@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import {
   Bot,
   CircleCheckBig,
@@ -38,6 +39,7 @@ import fullLogo from "@/public/full-logo.png"
 import accountIcon from "@/public/account.png"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const router = useRouter()
   const [user, setUser] = React.useState<{ id: string; name: string; email: string; avatar: string } | null>(null)
   const [orgs, setOrgs] = React.useState<Array<{ name: string; id: string; logo: any; plan: string }>>([])
   const [selectedOrg, setSelectedOrg] = React.useState<any>(null)
@@ -132,7 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const stored = localStorage.getItem("user")
       if (!stored) throw new Error("No user")
       const parsed = JSON.parse(stored)
-
+  
       setJoinStatus("loading")
       const res = await fetch("http://localhost:8000/users/join_organization", {
         method: "POST",
@@ -142,19 +144,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
         body: JSON.stringify({ user_id: parsed.id, invite_token: inviteToken }),
       })
-
+  
       const data = await res.json()
-
+  
       if (!res.ok) {
         setJoinStatus("error")
         setJoinMessage(data.detail || "Failed to join organization")
         return
       }
-
+  
       setJoinStatus("success")
       setJoinMessage(data.message)
-
-      localStorage.setItem("user", JSON.stringify({ ...parsed, organization: data.organization_id }))
+  
+      const updatedUser = { ...parsed, organization: data.organization_id }
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+      location.reload() // trigger reload to refresh org list
     } catch (err) {
       setJoinStatus("error")
       setJoinMessage("Something went wrong.")
@@ -360,7 +364,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </div>
       <button
         title="Open Organization"
-        onClick={() => window.open(`/organizations/${selectedOrg?.id || ""}`, "_blank")}
+        onClick={() => router.push(`/organizations/${selectedOrg?.id || ""}`)}
         className="p-2 hover:bg-muted rounded-md"
       >
         <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />

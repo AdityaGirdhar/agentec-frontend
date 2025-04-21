@@ -11,7 +11,7 @@ import Link from "next/link"
 import { Building2, User, ArrowLeft } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
-type Step = "role" | "org_choice" | "create_org"
+type Step = "role" | "org_choice" | "create_org" | "join_org"
 
 export default function OnboardingPage() {
   const searchParams = useSearchParams()
@@ -21,6 +21,9 @@ export default function OnboardingPage() {
   const [user, setUser] = useState<any>(null)
   const [step, setStep] = useState<Step>("role")
   const [orgName, setOrgName] = useState("")
+  const [inviteToken, setInviteToken] = useState("")
+  const [joinStatus, setJoinStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+  const [joinMessage, setJoinMessage] = useState("")
 
   useEffect(() => {
     const code = searchParams.get("code")
@@ -150,6 +153,42 @@ export default function OnboardingPage() {
     }
   }
 
+  const handleJoinOrganization = async () => {
+    const stored = localStorage.getItem("user")
+    if (!stored) return
+  
+    const parsed = JSON.parse(stored)
+  
+    setJoinStatus("loading")
+    try {
+      const res = await fetch("http://localhost:8000/users/join_organization", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ user_id: parsed.id, invite_token: inviteToken }),
+      })
+  
+      const data = await res.json()
+  
+      if (!res.ok) {
+        setJoinStatus("error")
+        setJoinMessage(data.detail || "Failed to join organization")
+        return
+      }
+  
+      setJoinStatus("success")
+      setJoinMessage(data.message)
+  
+      localStorage.setItem("user", JSON.stringify({ ...parsed, organization: data.organization_id }))
+      setTimeout(() => router.push("/dashboard"), 1500)
+    } catch (err) {
+      setJoinStatus("error")
+      setJoinMessage("Something went wrong.")
+    }
+  }
+
   const goBack = () => {
     if (step === "create_org") setStep("org_choice")
     else if (step === "org_choice") setStep("role")
@@ -225,7 +264,7 @@ export default function OnboardingPage() {
 
               {step === "org_choice" && (
                 <div className="flex flex-col gap-4">
-                  <Button variant="outline" className="w-full" onClick={() => router.push("/organizations/join")}>
+                  <Button variant="outline" className="w-full" onClick={() => setStep("join_org")}>
                     Join Existing Organization
                   </Button>
                   <Button className="w-full" onClick={() => setStep("create_org")}>
@@ -248,6 +287,27 @@ export default function OnboardingPage() {
                   >
                     Continue
                   </Button>
+                </div>
+              )}
+              {step === "join_org" && (
+                <div className="flex flex-col gap-4">
+                  <Input
+                    placeholder="Enter invite token"
+                    value={inviteToken}
+                    onChange={(e) => setInviteToken(e.target.value)}
+                  />
+                  <Button
+                    onClick={handleJoinOrganization}
+                    disabled={!inviteToken.trim()}
+                  >
+                    Join Organization
+                  </Button>
+                  {joinStatus === "success" && (
+                    <p className="text-sm text-green-600">{joinMessage}</p>
+                  )}
+                  {joinStatus === "error" && (
+                    <p className="text-sm text-red-600">{joinMessage}</p>
+                  )}
                 </div>
               )}
             </CardContent>

@@ -21,8 +21,16 @@ import {
   Mail,
   DollarSign,
   DatabaseZap,
-  FileSignature,
 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Agent {
   agent_id: string
@@ -38,6 +46,10 @@ export default function MarketplacePage() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [savedAgents, setSavedAgents] = useState<Set<string>>(new Set())
   const [userId, setUserId] = useState<string | null>(null)
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
+  const [bugName, setBugName] = useState("")
+  const [bugDescription, setBugDescription] = useState("")
+  const [openDialog, setOpenDialog] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem("user")
@@ -70,6 +82,31 @@ export default function MarketplacePage() {
       setSavedAgents((prev) => new Set(prev).add(agentId))
     } catch (err) {
       console.error("Failed to save agent", err)
+    }
+  }
+
+  const handleSubmitBug = async () => {
+    if (!userId || !selectedAgentId || !bugName || !bugDescription) return
+    try {
+      await fetch("http://localhost:8000/agents/create_bug", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          agent_id: selectedAgentId,
+          reported_user_id: userId,
+          name: bugName,
+          description: bugDescription,
+          status: "open"
+        }),
+      })
+      setOpenDialog(false)
+      setBugName("")
+      setBugDescription("")
+    } catch (err) {
+      console.error("Failed to report bug", err)
     }
   }
 
@@ -134,11 +171,42 @@ export default function MarketplacePage() {
                   </div>
 
                   <div className="flex flex-col justify-between items-end gap-2">
-                    <div className="flex flex-col gap-2">
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <Bug size={16} /> Report Bug
-                      </Button>
-                    </div>
+                    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2"
+                          onClick={() => setSelectedAgentId(agent.agent_id)}
+                        >
+                          <Bug size={16} /> Report Bug
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Report Bug</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <Input
+                            placeholder="Bug Title"
+                            value={bugName}
+                            onChange={(e) => setBugName(e.target.value)}
+                          />
+                          <Textarea
+                            placeholder="Bug Description"
+                            value={bugDescription}
+                            onChange={(e) => setBugDescription(e.target.value)}
+                          />
+                          <Button
+                            onClick={handleSubmitBug}
+                            disabled={!bugName || !bugDescription}
+                          >
+                            Submit
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
                     <Button
                       variant={isSaved ? "outline" : "default"}
                       size="sm"
