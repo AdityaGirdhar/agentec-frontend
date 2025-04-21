@@ -104,11 +104,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Platform",
       items: [
-        { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+        // { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
         { title: "Tasks", url: "/tasks", icon: CircleCheckBig },
         { title: "Repository", url: "/repository", icon: FolderGit2 },
         { title: "Marketplace", url: "/marketplace", icon: ShoppingCart },
-        { title: "Budgets", url: "/budgets", icon: CircleDollarSign },
+        // { title: "Budgets", url: "/budgets", icon: CircleDollarSign },
       ],
     },
     {

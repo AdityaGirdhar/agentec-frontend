@@ -29,38 +29,64 @@ export default function TaskPage() {
   const [loading, setLoading] = useState(false)
   const [agents, setAgents] = useState<any[]>([])
   const [keys, setKeys] = useState<any[]>([])
+  const [executions, setExecutions] = useState<any[]>([])
   const [selectedAgent, setSelectedAgent] = useState("")
   const [selectedKey, setSelectedKey] = useState("")
-  const [userEmail, setUserEmail] = useState("")
+  const [userId, setUserId] = useState("")
   const [managementMode, setManagementMode] = useState(false)
+  const [agentNames, setAgentNames] = useState<{ [id: string]: string }>({})
+  const [keyNames, setKeyNames] = useState<{ [id: string]: string }>({})
   const pdfRef = useRef<HTMLDivElement>(null)
+  const [totalCost, setTotalCost] = useState<number | null>(null)
+
+  const enrichExecutionMetadata = async (execs: any[]) => {
+    const newAgentNames: any = {}
+    const newKeyNames: any = {}
+  
+    await Promise.all(execs.map(async (exec) => {
+      if (!agentNames[exec.agent_id]) {
+        const res = await fetch(`http://localhost:8000/agents/get_agent_info?agent_id=${exec.agent_id}`)
+        if (res.ok) {
+          const data = await res.json()
+          newAgentNames[exec.agent_id] = data.name
+        }
+      }
+      if (!keyNames[exec.key_id]) {
+        const res = await fetch(`http://localhost:8000/users/get_key_info?key_id=${exec.key_id}`)
+        if (res.ok) {
+          const data = await res.json()
+          newKeyNames[exec.key_id] = data.name
+        }
+      }
+    }))
+  
+    setAgentNames(prev => ({ ...prev, ...newAgentNames }))
+    setKeyNames(prev => ({ ...prev, ...newKeyNames }))
+  }
 
   useEffect(() => {
     const fetchData = async () => {
       const storedUser = localStorage.getItem("user")
       if (!storedUser) return
-  
+
       const parsed = JSON.parse(storedUser)
-      setUserEmail(parsed.email)
-  
+      setUserId(parsed.id)
+
       try {
-        // ✅ Fetch keys using user_id
         const keysRes = await fetch(`http://localhost:8000/users/get_keys?user_id=${parsed.id}`)
         const keysData = await keysRes.json()
         setKeys(Array.isArray(keysData) ? keysData : [])
-  
-        // ✅ Fetch saved agent IDs
+
         const savedAgentsRes = await fetch(`http://localhost:8000/users/get_saved_agents?user_id=${parsed.id}`)
         const savedAgentIds: string[] = await savedAgentsRes.json()
-  
-        // ✅ Fetch each agent's info
+
         const agentDetails = await Promise.all(
           savedAgentIds.map(async (agentId) => {
             const res = await fetch(`http://localhost:8000/agents/get_agent_info?agent_id=${agentId}`)
             return res.ok ? await res.json() : null
           })
         )
-  
+
         setAgents(agentDetails.filter(Boolean))
       } catch (err) {
         console.error("Failed to fetch keys or agents", err)
@@ -68,9 +94,9 @@ export default function TaskPage() {
         setKeys([])
       }
     }
-  
+
     fetchData()
-  
+
     if (taskUUID) {
       fetch(`http://localhost:8000/tasks/get-task-info?task_id=${taskUUID}`)
         .then(res => res.json())
@@ -79,8 +105,69 @@ export default function TaskPage() {
           setName(data.name)
         })
         .catch(() => console.error("Failed to load task info"))
+
+        fetch(`http://localhost:8000/tasks/get-executions?user_id=${JSON.parse(localStorage.getItem("user") || "{}").id}&task_id=${taskUUID}`)
+        .then(res => res.json())
+        .then(data => {
+          const execData = Array.isArray(data) ? data : []
+          setExecutions(execData)
+          enrichExecutionMetadata(execData)
+        })
+
+        fetch(`http://localhost:8000/tasks/get_task_total_cost?task_id=${taskUUID}`)
+        .then(res => res.json())
+        .then(data => setTotalCost(data.total_cost))
+        .catch(err => console.error("Failed to fetch total cost", err))
+      
     }
+    
+
   }, [taskUUID])
+  
+
+  const handleSend = async () => {
+    if (!selectedAgent || !selectedKey || !prompt.trim()) return
+
+    setLoading(true)
+
+    try {
+      const techRes = await fetch(`http://localhost:8000/agents/fetch_agent_technical_info?agent_id=${selectedAgent}`)
+      const techInfo = await techRes.json()
+
+      const apiUrl = `http://localhost:8000/${techInfo.execution_api}`
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ input_text: prompt, key_id: selectedKey }),
+      })
+
+      const result = await res.json()
+      const outputText = result.output_text || ""
+      setMarkdownText(outputText)
+      setRenderCode(result.render_code || [])
+
+      await fetch("http://localhost:8000/tasks/create-execution", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          task_id: taskUUID,
+          input_text: prompt,
+          output_text: outputText,
+          agent_id: selectedAgent,
+          key_id: selectedKey,
+        }),
+      })
+
+      const executionsRes = await fetch(`http://localhost:8000/tasks/get-executions?user_id=${userId}&task_id=${taskUUID}`)
+      const executionsData = await executionsRes.json()
+      setExecutions(executionsData)
+    } catch (err) {
+      console.error("Execution error", err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleEditName = async () => {
     try {
@@ -110,7 +197,7 @@ export default function TaskPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <div className="flex flex-col h-screen w-full">
+        <div className="flex flex-col h-screen w-full pt-4">
           <header className="flex h-16 items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
@@ -127,144 +214,146 @@ export default function TaskPage() {
             </Breadcrumb>
           </header>
 
-          <div className="flex-1 flex flex-col gap-4 px-6 ">
-  <div className="rounded-xl bg-muted/50 p-4">
-    <div className="flex justify-between items-center">
-      <div className="flex items-center gap-2">
-      {editing ? (
-          <div className="flex gap-2">
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
-            <Button onClick={handleEditName} size="sm">Save</Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setName(task?.name || "")
-                setEditing(false)
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            {name}
-            <Button variant="ghost" size="icon" onClick={() => setEditing(true)}>
-              <Pencil size={16} />
-            </Button>
-          </h1>
-        )}
-        <div className="flex gap-2 ml-4">
-          <Button size="sm" variant="outline"><Share2 size={16} /></Button>
-          <Button size="sm" variant="outline" onClick={handleDownloadPDF}><Download size={16} /></Button>
-          <Button size="sm" variant="outline" className="text-red-600 border-red-300"><Trash2 size={16} /></Button>
-        </div>
+          <div className="flex-1 flex flex-col gap-4 px-6 pt-3">
+            <div className="rounded-xl bg-muted/50 p-4">
+              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center w-full">
+  <div className="flex items-center gap-2">
+    {editing ? (
+      <div className="flex gap-2">
+        <Input value={name} onChange={(e) => setName(e.target.value)} />
+        <Button onClick={handleEditName} size="sm">Save</Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setName(task?.name || "")
+            setEditing(false)
+          }}
+        >
+          Cancel
+        </Button>
       </div>
-
-      <div className="flex items-center gap-2">
-        <Label htmlFor="mode-toggle" className="text-sm">Management</Label>
-        <Switch
-          id="mode-toggle"
-          checked={managementMode}
-          onCheckedChange={setManagementMode}
-        />
-      </div>
-    </div>
+    ) : (
+      <h1 className="text-2xl font-semibold flex items-center gap-2">
+        {name}
+        <Button variant="ghost" size="icon" onClick={() => setEditing(true)}>
+          <Pencil size={16} />
+        </Button>
+      </h1>
+    )}
   </div>
 
-  <div className="flex-1 flex flex-col mb-4">
-  <div className="flex-1 rounded-xl bg-muted/50 p-4">
-    {!managementMode ? (
-      <div className="flex flex-col h-full gap-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Select onValueChange={setSelectedAgent}>
-  <SelectTrigger>
-    <SelectValue placeholder="Choose an agent" />
-  </SelectTrigger>
-  <SelectContent>
-    {agents.length > 0 ? (
-      agents.map((agent) => (
-        <SelectItem key={agent.id} value={agent.id}>
-          {agent.name.replace(/_/g, " ")}
-        </SelectItem>
-      ))
-    ) : (
-      <div className="text-sm text-muted-foreground px-3 py-1">No agents found</div>
-    )}
-  </SelectContent>
-</Select>
+  <div className="flex items-center gap-4 ml-auto">
+    <div className="text-sm min-w-[80px] text-right">
+      {totalCost !== null ? `$${totalCost.toFixed(2)}` : '...'}
+    </div>
+    <Button size="sm" variant="outline"><Share2 size={16} /></Button>
+    <Button size="sm" variant="outline" onClick={handleDownloadPDF}><Download size={16} /></Button>
+    <Button size="sm" variant="outline" className="text-red-600 border-red-300"><Trash2 size={16} /></Button>
+  </div>
+</div>
 
-<Select onValueChange={setSelectedKey}>
-  <SelectTrigger>
-    <SelectValue placeholder="Choose a key" />
-  </SelectTrigger>
-  <SelectContent>
-    {keys.length > 0 ? (
-      keys.map((key) => (
-        <SelectItem key={key.id} value={key.id}>
-          {key.name}
-        </SelectItem>
-      ))
-    ) : (
-      <div className="text-sm text-muted-foreground px-3 py-1">No keys found</div>
-    )}
-  </SelectContent>
-</Select>
-        </div>
+                {/* <div className="flex items-center gap-2">
+                  <Label htmlFor="mode-toggle" className="text-sm">Management</Label>
+                  <Switch id="mode-toggle" checked={managementMode} onCheckedChange={setManagementMode} />
+                </div> */}
+              </div>
+            </div>
 
-        <div className="relative flex-1 overflow-hidden">
-  <div className="flex h-full">
-  <div className="w-full rounded-xl p-4 h-full overflow-y-auto scrollbar-thin bg-white pb-32">
-      {loading ? (
-        <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full animate-pulse">
-          Loading output...
-        </div>
-      ) : markdownText ? (
-        <>
-          <ReactMarkdown className="prose w-full max-w-full text-left">
-            {markdownText}
-          </ReactMarkdown>
-          {renderCode.map((html, index) => (
-            <div
-              key={index}
-              className="mt-6 border rounded-lg p-4 bg-white"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
-          ))}
-        </>
-      ) : (
-      <div className="text-muted-foreground text-lg text-center flex justify-center items-center h-full w-full px-4">
-          No Task Output
-        </div>
-      )}
+            <div className="grid md:grid-cols-2 gap-4">
+              <Select onValueChange={setSelectedAgent}>
+                <SelectTrigger><SelectValue placeholder="Choose an agent" /></SelectTrigger>
+                <SelectContent>
+                  {agents.length > 0 ? agents.map(agent => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name.replace(/_/g, " ")}
+                    </SelectItem>
+                  )) : (
+                    <div className="text-sm text-muted-foreground px-3 py-1">No agents found</div>
+                  )}
+                </SelectContent>
+              </Select>
+
+              <Select onValueChange={setSelectedKey}>
+                <SelectTrigger><SelectValue placeholder="Choose a key" /></SelectTrigger>
+                <SelectContent>
+                  {keys.length > 0 ? keys.map(key => (
+                    <SelectItem key={key.id} value={key.id}>
+                      {key.name}
+                    </SelectItem>
+                  )) : (
+                    <div className="text-sm text-muted-foreground px-3 py-1">No keys found</div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="relative flex-1 overflow-hidden border rounded-xl bg-muted/50 flex flex-col mb-2">
+  <div className="flex-1 overflow-y-auto px-4 pt-4 space-y-4 scrollbar-thin">
+    {executions.length === 0 ? (
+      <div className="text-muted-foreground text-lg text-center h-full flex items-center justify-center">
+        No Executions
+      </div>
+    ) : (
+      executions.map(exec => (
+        <details
+  key={exec.id}
+  className="bg-white border rounded-xl shadow-sm transition-all duration-300 open:shadow-md open:bg-white open:ring-1 open:ring-gray-300"
+>
+  <summary className="cursor-pointer select-none px-4 py-3 flex justify-between items-center text-sm font-medium text-muted-foreground">
+    <span>Execution #{exec.sequence_number}</span>
+    <span className="text-xs">{new Date(exec.creation_time).toLocaleString()}</span>
+  </summary>
+
+  <div
+    className="text-sm px-4 pb-4 pt-2"
+    onClick={(e) => e.stopPropagation()}
+    onDoubleClick={(e) => e.stopPropagation()}
+  >
+    <div>
+      <strong>Prompt:</strong> {exec.input_text}
+    </div>
+    <div className="w-full mt-2">
+      <strong>Output:</strong>
+      <pre className="whitespace-pre-wrap text-sm text-gray-800 mt-1">{exec.output_text}</pre>
+    </div>
+    <div className="flex flex-col gap-1 pt-2">
+      <span>Agent: <code>{agentNames[exec.agent_id] || exec.agent_id}</code></span>
+      <span>Key: <code>{keyNames[exec.key_id] || exec.key_id}</code></span>
     </div>
   </div>
+</details>
+      ))
+    )}
+  </div>
 
-  {/* Fixed prompt input at the bottom */}
-  <div className="absolute bottom-0 left-0 w-full py-2 border-t bg-muted/50">
+  <div className="shrink-0 py-3 border-t bg-muted/50 px-4 mt-2">
     <div className="flex items-center gap-2">
       <textarea
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         placeholder="Ask something..."
-        className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring overflow-y-auto scrollbar-thin"
+        className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       />
       <Button
-        className="bg-black text-white hover:bg-black/90"
-        onClick={() => {}}
-        disabled={loading}
-      >
-        Send
-      </Button>
+  className="bg-black text-white hover:bg-black/90 flex items-center gap-2"
+  onClick={handleSend}
+  disabled={loading || !selectedAgent || !selectedKey || !prompt.trim()}
+>
+  {loading ? (
+    <>
+      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8z" />
+      </svg>
+      Waiting...
+    </>
+  ) : (
+    "Send"
+  )}
+</Button>
     </div>
-  </div>
-</div>
-      </div>
-    ) : (
-      <div className="flex-1 rounded-xl bg-muted/50 text-muted-foreground text-center flex items-center justify-center h-full">
-        Management View (coming soon)
-      </div>
-    )}
   </div>
 </div>
           </div>

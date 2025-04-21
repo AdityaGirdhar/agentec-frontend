@@ -74,7 +74,7 @@ export default function OnboardingPage() {
           localStorage.setItem("user", JSON.stringify(userData))
           localStorage.setItem("show_key_modal", "false")
           setUser(userData)
-          router.push("/dashboard")
+          router.push("/tasks")
           return
         }
 
@@ -146,7 +146,7 @@ export default function OnboardingPage() {
       const orgData = await createOrgRes.json()
       console.log("Organization created:", orgData)
       setStatus("org_created")
-      setTimeout(() => router.push("/dashboard"), 1500)
+      setTimeout(() => router.push("/tasks"), 1500)
     } catch (err) {
       console.error("Error creating organization:", err)
       setStatus("error")
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
       setJoinMessage(data.message)
   
       localStorage.setItem("user", JSON.stringify({ ...parsed, organization: data.organization_id }))
-      setTimeout(() => router.push("/dashboard"), 1500)
+      setTimeout(() => router.push("/tasks"), 1500)
     } catch (err) {
       setJoinStatus("error")
       setJoinMessage("Something went wrong.")
@@ -254,7 +254,7 @@ export default function OnboardingPage() {
                     Organization
                   </Button>
                   <Button variant="outline" className="w-full" asChild>
-                    <Link href="/dashboard">
+                    <Link href="/tasks">
                       <User className="mr-2 h-4 w-4" />
                       Individual
                     </Link>

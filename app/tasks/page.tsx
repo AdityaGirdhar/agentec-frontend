@@ -234,10 +234,10 @@ const handleCreateNewTask = async () => {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl bg-muted/50 p-4">
+            {/* <div className="rounded-xl bg-muted/50 p-4">
               <h2 className="text-lg font-medium mb-2">Schedules</h2>
               <p className="text-sm text-muted-foreground">No tasks scheduled</p>
-            </div>
+            </div> */}
 
             <div className="rounded-xl bg-muted/50 p-4">
               <h2 className="text-lg font-medium mb-2">Shared Tasks</h2>
@@ -322,7 +322,7 @@ const handleCreateNewTask = async () => {
                 "New Task"
               )}
             </Button>
-            <Button variant="outline">New Schedule</Button>
+            {/* <Button variant="outline">New Schedule</Button> */}
           </div>
 
           {tasks.length > 0 && (
