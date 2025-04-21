@@ -264,22 +264,22 @@ const handleCreateNewTask = async () => {
                         <Button size="sm" variant="outline" title="View Task">
                           <Eye size={16} />
                         </Button>
-                        <Button
+                        {/* <Button
                           size="sm"
                           variant="outline"
                           title="Download PDF"
                           onClick={() => handleDownloadPDF(task.task_id)}
                         >
                           <Download size={16} />
-                        </Button>
-                        <Button
+                        </Button> */}
+                        {/* <Button
                           size="sm"
                           variant="outline"
                           className="text-red-500 border-red-300 hover:bg-red-50"
                           title="Delete Shared Task"
                         >
                           <Trash2 size={16} />
-                        </Button>
+                        </Button> */}
                       </div>
                     </li>
                   ))}
@@ -356,14 +356,14 @@ const handleCreateNewTask = async () => {
                             >
                               <Eye size={16} />
                             </Button>
-                            <Button
+                            {/* <Button
                               size="sm"
                               variant="outline"
                               title="Download PDF"
                               onClick={() => handleDownloadPDF(task.id)}
                             >
                               <Download size={16} />
-                            </Button>
+                            </Button> */}
                             <Button
                               size="sm"
                               variant="outline"
@@ -426,7 +426,36 @@ const handleCreateNewTask = async () => {
                     <p className="text-sm font-medium">{member.name}</p>
                     <p className="text-xs text-muted-foreground">{member.email}</p>
                   </div>
-                  <Button size="sm" variant="outline">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch("http://localhost:8000/tasks/share-task", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            sender_id: user.id,
+                            reciever_id: member.id,
+                            task_id: activeSharedModal,
+                          }),
+                        })
+
+                        const data = await res.json()
+                        if (data.shared) {
+                          alert(`Task shared with ${member.name}`)
+                          fetchTasks()
+                        } else {
+                          alert(`Task already shared with ${member.name}`)
+                        }
+                      } catch (err) {
+                        console.error("Failed to share task", err)
+                        alert("Error sharing task")
+                      }
+                    }}
+                  >
                     Share
                   </Button>
                 </li>
