@@ -41,19 +41,29 @@ export default function Page() {
   const [timeframe, setTimeframe] = useState("day")
   const [showModal, setShowModal] = useState(false)
   const [isBlurred, setIsBlurred] = useState(false)
+  const [executionData, setExecutionData] = useState({ task_count: 0, execution_count: 0 })
+  const [budgetData, setBudgetData] = useState({ current_cost: 0, projected_cost: 0 })
 
   useEffect(() => {
     const storedLimits = localStorage.getItem("taskLimits")
     if (storedLimits) setLimits(JSON.parse(storedLimits))
-
-    if (localStorage.getItem("show_key_modal") === "true") {
-      setShowModal(true)
-      setIsBlurred(true)
-    } else {
-      setShowModal(false)
-      setIsBlurred(false)
-    }
   }, [])
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user")
+    if (!storedUser) return
+    const userId = JSON.parse(storedUser).id
+  
+    fetch(`http://localhost:8000/analytics/total_tasks_executed?user_id=${userId}&period=${timeframe}`)
+      .then(res => res.json())
+      .then(setExecutionData)
+      .catch(err => console.error("Execution fetch error", err))
+  
+    fetch(`http://localhost:8000/analytics/total_budget_consumed?user_id=${userId}&period=${timeframe}`)
+      .then(res => res.json())
+      .then(setBudgetData)
+      .catch(err => console.error("Budget fetch error", err))
+  }, [timeframe])
 
   const addLimit = (limit: any) => {
     const updated = [...limits, limit]
@@ -65,12 +75,6 @@ export default function Page() {
     const updated = [...limits.slice(0, index), ...limits.slice(index + 1)]
     setLimits(updated)
     localStorage.setItem("taskLimits", JSON.stringify(updated))
-  }
-
-  const handleModalClose = () => {
-    localStorage.setItem("show_key_modal", "false")
-    setShowModal(false)
-    setIsBlurred(false)
   }
 
   return (
@@ -112,45 +116,52 @@ export default function Page() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-xl bg-muted/50 p-8 flex flex-col justify-between space-y-4">
-                  <h2 className="text-lg font-medium">Cost</h2>
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div>
-                      <div className="text-5xl font-bold">$250</div>
-                      <div className="text-muted-foreground">Total Cost</div>
-                    </div>
-                    <div>
-                      <div className="text-4xl font-semibold text-gray-600">$400</div>
-                      <div className="text-muted-foreground">Projected Cost</div>
-                    </div>
-                    <div className="w-24 h-24">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={costData} dataKey="value" outerRadius={40} innerRadius={25}>
-                            {costData.map((_, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
+  <div className="rounded-xl bg-muted/50 p-8 flex flex-col justify-between space-y-4">
+    <h2 className="text-lg font-medium">Cost</h2>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <div className="text-5xl font-bold">${budgetData.current_cost.toFixed(2)}</div>
+        <div className="text-muted-foreground">Total Cost</div>
+      </div>
+      <div>
+        <div className="text-4xl font-semibold text-gray-600">${budgetData.projected_cost.toFixed(2)}</div>
+        <div className="text-muted-foreground">Projected Cost</div>
+      </div>
+      <div className="w-24 h-24">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={[
+                { name: "Total", value: budgetData.current_cost },
+                { name: "Projected", value: budgetData.projected_cost }
+              ]}
+              dataKey="value"
+              outerRadius={40}
+              innerRadius={25}
+            >
+              <Cell fill="#E5E7EB" />
+              <Cell fill="#6366F1" />
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  </div>
 
-                <div className="rounded-xl bg-muted/50 p-8 flex flex-col justify-between space-y-4">
-                  <h2 className="text-lg font-medium">Executions</h2>
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div>
-                      <div className="text-5xl font-bold">82</div>
-                      <div className="text-muted-foreground">Tasks Executed</div>
-                    </div>
-                    <div>
-                      <div className="text-4xl font-semibold text-green-600">76</div>
-                      <div className="text-muted-foreground">Successful Executions</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+  <div className="rounded-xl bg-muted/50 p-8 flex flex-col justify-between space-y-4">
+    <h2 className="text-lg font-medium">Executions</h2>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <div className="text-5xl font-bold">{executionData.task_count}</div>
+        <div className="text-muted-foreground">Tasks Created</div>
+      </div>
+      <div>
+        <div className="text-4xl font-semibold text-green-600">{executionData.execution_count}</div>
+        <div className="text-muted-foreground">Successful Executions</div>
+      </div>
+    </div>
+  </div>
+</div>
             </div>
           </SidebarInset>
         </SidebarProvider>

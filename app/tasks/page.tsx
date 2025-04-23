@@ -57,6 +57,7 @@ export default function Page() {
   const [creatingTask, setCreatingTask] = useState(false)
   const [orgMembers, setOrgMembers] = useState<any[]>([])
   const [loadingOrgMembers, setLoadingOrgMembers] = useState(false)
+  const [showHelpModal, setShowHelpModal] = useState(false)
 
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [open, setOpen] = useState(false)
@@ -264,7 +265,7 @@ const handleCreateNewTask = async () => {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 items-center gap-2 px-4">
+        <header className="relative flex h-16 items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
@@ -274,6 +275,14 @@ const handleCreateNewTask = async () => {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+          <Button
+            size="sm"
+            variant="outline"
+            className="absolute right-4"
+            onClick={() => setShowHelpModal(true)}
+          >
+            Help
+          </Button>
         </header>
 
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pr-10">
@@ -386,7 +395,6 @@ const handleCreateNewTask = async () => {
                             <SelectValue placeholder="Select task" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem key={100} value="dummy">dummy</SelectItem>
                             {tasks.map(task => (
                               <SelectItem key={task.id} value={task.name}>{task.name}</SelectItem>
                             ))}
@@ -620,6 +628,27 @@ const handleCreateNewTask = async () => {
         className="absolute top-3 right-3 text-sm px-2 py-1"
         variant="ghost"
         onClick={() => setActiveSharedModal(null)}
+      >
+        Close
+      </Button>
+    </div>
+  </div>
+)}
+{showHelpModal && (
+  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+    <div className="bg-white rounded-lg p-6 w-full max-w-xl shadow-xl relative">
+      <h2 className="text-lg font-semibold mb-4">Help - Tasks Page</h2>
+      <div className="space-y-4 text-sm text-muted-foreground">
+        <p><strong>Tasks:</strong> These are your personal tasks. You can create, view, or delete them.</p>
+        <p><strong>Shared Tasks:</strong> Tasks shared with you by other organization members.</p>
+        <p><strong>Schedules:</strong> Set up automated task runs by specifying frequency, time, and task name. These are stored locally in your browser.</p>
+        <p><strong>Sharing:</strong> Click the share icon next to your task to share it with members of your organization. Shared tasks show a badge with the number of users they’ve been shared with.</p>
+        <p><strong>Actions:</strong> Use buttons to view task details, share with others, or delete.</p>
+      </div>
+      <Button
+        className="absolute top-3 right-3 text-sm px-2 py-1"
+        variant="ghost"
+        onClick={() => setShowHelpModal(false)}
       >
         Close
       </Button>

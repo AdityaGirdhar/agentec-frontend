@@ -51,6 +51,7 @@ export default function MarketplacePage() {
   const [bugDescription, setBugDescription] = useState("")
   const [openDialog, setOpenDialog] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [showHelpModal, setShowHelpModal] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem("user")
@@ -115,7 +116,7 @@ export default function MarketplacePage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 px-4">
+      <header className="relative flex h-16 shrink-0 items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
@@ -125,6 +126,14 @@ export default function MarketplacePage() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+          <Button
+  size="sm"
+  variant="outline"
+  className="absolute right-4"
+  onClick={() => setShowHelpModal(true)}
+>
+  Help
+</Button>
         </header>
 
         <div className="flex flex-col gap-4 px-6 pb-10">
@@ -241,6 +250,28 @@ export default function MarketplacePage() {
     })}
 </div>
         </div>
+        {showHelpModal && (
+  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+    <div className="bg-white rounded-lg p-6 w-full max-w-xl shadow-xl relative">
+      <h2 className="text-lg font-semibold mb-4">Help - Marketplace</h2>
+      <div className="space-y-4 text-sm text-muted-foreground">
+        <p><strong>Search:</strong> Use the search bar to filter agents by name, tags, or description.</p>
+        <p><strong>Save to Repository:</strong> Click "Save to Repository" to bookmark the agent for later use.</p>
+        <p><strong>Report Bug:</strong> Use the "Report Bug" button to submit an issue with an agent. Provide a title and description.</p>
+        <p><strong>Tags:</strong> Tags show the primary capabilities or domains the agent supports.</p>
+        <p><strong>Cost:</strong> Indicates the approximate cost per execution for this agent.</p>
+        <p><strong>Providers:</strong> Lists supported platforms for the agent’s execution (like OpenAI, Claude, etc).</p>
+      </div>
+      <Button
+        className="absolute top-3 right-3 text-sm px-2 py-1"
+        variant="ghost"
+        onClick={() => setShowHelpModal(false)}
+      >
+        Close
+      </Button>
+    </div>
+  </div>
+)}
       </SidebarInset>
     </SidebarProvider>
   )

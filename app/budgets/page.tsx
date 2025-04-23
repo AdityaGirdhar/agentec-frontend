@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label"
 export default function Page() {
   const [limits, setLimits] = useState<any[]>([])
   const [open, setOpen] = useState(false)
+  const [showHelpModal, setShowHelpModal] = useState(false)
 
   useEffect(() => {
     const storedLimits = localStorage.getItem("taskLimits")
@@ -51,21 +52,27 @@ export default function Page() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="#">
-                      Budgets
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-          </header>
+        <header className="relative flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+  <div className="flex items-center gap-2 px-4">
+    <SidebarTrigger className="-ml-1" />
+    <Separator orientation="vertical" className="mr-2 h-4" />
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem className="hidden md:block">
+          <BreadcrumbLink href="#">Budgets</BreadcrumbLink>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  </div>
+  <Button
+    size="sm"
+    variant="outline"
+    className="absolute right-4"
+    onClick={() => setShowHelpModal(true)}
+  >
+    Help
+  </Button>
+</header>
 
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pr-10">
             <div className="flex items-center justify-between">
@@ -153,6 +160,26 @@ export default function Page() {
             </div>
           </div>
         </SidebarInset>
+        {showHelpModal && (
+  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+    <div className="bg-white rounded-lg p-6 w-full max-w-xl shadow-xl relative">
+      <h2 className="text-lg font-semibold mb-4">Help - Budgets Page</h2>
+      <div className="space-y-4 text-sm text-muted-foreground">
+        <p><strong>Limits:</strong> You can set custom spending limits for specific date ranges. These are stored in your browser's local storage.</p>
+        <p><strong>Adding Limits:</strong> Click "Set limits" to add a new budget limit by selecting start and end dates and a budget amount.</p>
+        <p><strong>Deleting Limits:</strong> Use the "Delete" button beside a limit to remove it.</p>
+        <p><strong>Alerts:</strong> This section will show budget breach alerts in the future, once integrated with task execution tracking.</p>
+      </div>
+      <Button
+        className="absolute top-3 right-3 text-sm px-2 py-1"
+        variant="ghost"
+        onClick={() => setShowHelpModal(false)}
+      >
+        Close
+      </Button>
+    </div>
+  </div>
+)}
       </SidebarProvider>
     </>
   )
