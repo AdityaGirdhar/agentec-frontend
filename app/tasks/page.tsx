@@ -17,8 +17,12 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
 import { Download, Eye, Trash2, Share2 } from "lucide-react"
+import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 
 interface Task {
   id: string
@@ -34,6 +38,14 @@ interface SharedTask {
   task_name?: string
 }
 
+interface Schedule {
+  id: string
+  frequency: string
+  time: string
+  task: string
+}
+
+
 export default function Page() {
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
@@ -45,6 +57,41 @@ export default function Page() {
   const [creatingTask, setCreatingTask] = useState(false)
   const [orgMembers, setOrgMembers] = useState<any[]>([])
   const [loadingOrgMembers, setLoadingOrgMembers] = useState(false)
+
+  const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [open, setOpen] = useState(false)
+  const [newSchedule, setNewSchedule] = useState({
+    frequency: "",
+    time: "",
+    task: ""
+  })
+
+  useEffect(() => {
+    const stored = localStorage.getItem("schedules")
+    if (stored) setSchedules(JSON.parse(stored))
+  }, [])
+
+  const saveSchedules = (s: Schedule[]) => {
+    localStorage.setItem("schedules", JSON.stringify(s))
+    setSchedules(s)
+  }
+
+  const handleAddSchedule = () => {
+    if (!newSchedule.frequency || !newSchedule.time || !newSchedule.task) return
+    const schedule: Schedule = {
+      id: crypto.randomUUID(),
+      ...newSchedule
+    }
+    const updated = [...schedules, schedule]
+    saveSchedules(updated)
+    setNewSchedule({ frequency: "", time: "", task: "" })
+    setOpen(false)
+  }
+
+  const deleteSchedule = (id: string) => {
+    const updated = schedules.filter(s => s.id !== id)
+    saveSchedules(updated)
+  }
 
 useEffect(() => {
   const storedUser = localStorage.getItem("user")
@@ -235,11 +282,6 @@ const handleCreateNewTask = async () => {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {/* <div className="rounded-xl bg-muted/50 p-4">
-              <h2 className="text-lg font-medium mb-2">Schedules</h2>
-              <p className="text-sm text-muted-foreground">No tasks scheduled</p>
-            </div> */}
-
             <div className="rounded-xl bg-muted/50 p-4">
               <h2 className="text-lg font-medium mb-2">Shared Tasks</h2>
               {sharedTasks.length === 0 ? (
@@ -263,13 +305,13 @@ const handleCreateNewTask = async () => {
                       </div>
                       <div className="flex gap-2">
                       <Button
-  size="sm"
-  variant="outline"
-  title="View Task"
-  onClick={() => router.push(`/tasks/${task.task_id}`)}
->
-  <Eye size={16} />
-</Button>
+                        size="sm"
+                        variant="outline"
+                        title="View Task"
+                        onClick={() => router.push(`/tasks/${task.task_id}`)}
+                      >
+                        <Eye size={16} />
+                      </Button>
                         {/* <Button
                           size="sm"
                           variant="outline"
@@ -290,6 +332,105 @@ const handleCreateNewTask = async () => {
                     </li>
                   ))}
                 </ul>
+              )}
+            </div>
+
+            <div className="rounded-xl bg-muted/50 p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-lg font-medium">Schedules</h2>
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">New Schedule</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                  <DialogTitle className="sr-only">Schedule</DialogTitle>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Frequency</Label>
+                        <Select
+                          value={newSchedule.frequency}
+                          onValueChange={(value) => setNewSchedule(prev => ({ ...prev, frequency: value }))}
+                          >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Everyday">Everyday</SelectItem>
+                            <SelectItem value="Alternate">Alternate</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Time</Label>
+                        <Select
+                          value={newSchedule.time}
+                          onValueChange={(value) => setNewSchedule(prev => ({ ...prev, time: value }))}
+                          >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select time" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Daily">Daily</SelectItem>
+                            <SelectItem value="3-Day">3-Day</SelectItem>
+                            <SelectItem value="Week">Week</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Task</Label>
+                        <Select
+                          value={newSchedule.task}
+                          onValueChange={(value) => setNewSchedule(prev => ({ ...prev, task: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select task" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem key={100} value="dummy">dummy</SelectItem>
+                            {tasks.map(task => (
+                              <SelectItem key={task.id} value={task.name}>{task.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button onClick={handleAddSchedule}>Add Schedule</Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {schedules.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No tasks scheduled</p>
+              ) : (
+                <table className="w-full text-sm mt-2">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="p-2 text-left">Frequency</th>
+                      <th className="p-2 text-left">Time</th>
+                      <th className="p-2 text-left">Task</th>
+                      <th className="p-2 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {schedules.map((s) => (
+                      <tr key={s.id} className="hover:bg-gray-50">
+                        <td className="p-2">{s.frequency}</td>
+                        <td className="p-2">{s.time}</td>
+                        <td className="p-2">{s.task}</td>
+                        <td className="p-2 text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-500 border-red-300 hover:bg-red-50"
+                            onClick={() => deleteSchedule(s.id)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
           </div>
