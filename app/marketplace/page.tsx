@@ -50,6 +50,7 @@ export default function MarketplacePage() {
   const [bugName, setBugName] = useState("")
   const [bugDescription, setBugDescription] = useState("")
   const [openDialog, setOpenDialog] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
     const stored = localStorage.getItem("user")
@@ -128,99 +129,117 @@ export default function MarketplacePage() {
 
         <div className="flex flex-col gap-4 px-6 pb-10">
           <h1 className="text-2xl font-semibold pt-2">Marketplace</h1>
+                    <Input
+            type="text"
+            placeholder="Search agents by name, tags, or description..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full max-w-md mb-4"
+          />
 
-          <div className="grid gap-6 grid-cols-1">
-            {agents.map((agent) => {
-              const isSaved = savedAgents.has(agent.agent_id)
-              return (
-                <div
-                  key={agent.agent_id}
-                  className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 hover:shadow-md transition flex justify-between"
-                >
-                  <div className="flex-1 pr-6 flex flex-col gap-2">
-                    <h2 className="text-xl font-bold text-gray-900 mt-1">
-                      {agent.name.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-                    </h2>
-                    <p className="text-gray-700 text-sm">{agent.description}</p>
+<div className="grid gap-6 grid-cols-1">
+  {agents
+    .filter((agent) => {
+      const query = searchTerm.toLowerCase()
+      return (
+        agent.name.toLowerCase().includes(query) ||
+        agent.description.toLowerCase().includes(query) ||
+        agent.tags.toLowerCase().includes(query)
+      )
+    })
+    .map((agent) => {
+      const isSaved = savedAgents.has(agent.agent_id)
+      return (
+        <div
+          key={agent.agent_id}
+          className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 hover:shadow-md transition flex justify-between"
+        >
+          <div className="flex-1 pr-6 flex flex-col gap-2">
+            <h2 className="text-xl font-bold text-gray-900 mt-1">
+              {agent.name.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+            </h2>
+            <p className="text-gray-700 text-sm">{agent.description}</p>
 
-                    <div className="text-sm mt-2 flex items-start gap-2">
-                      <Tags className="w-4 h-4 text-muted-foreground mt-1" />
-                      <div className="flex flex-wrap gap-2">
-                        {agent.tags.split(",").map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="bg-black text-white px-2 py-1 rounded-full text-xs font-medium"
-                          >
-                            {tag.trim()}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-sm flex items-center gap-2">
-                      <DatabaseZap className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium text-gray-800">Supported Providers:</span> {agent.supported_providers.join(", ")}
-                    </div>
-                    <div className="text-sm flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium text-gray-800">Developer Contact:</span> {agent.developer_contact}
-                    </div>
-                    <div className="text-sm flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium text-gray-800">Cost per Execution:</span> ${agent.cost_per_execution}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col justify-between items-end gap-2">
-                    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center gap-2"
-                          onClick={() => setSelectedAgentId(agent.agent_id)}
-                        >
-                          <Bug size={16} /> Report Bug
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Report Bug</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <Input
-                            placeholder="Bug Title"
-                            value={bugName}
-                            onChange={(e) => setBugName(e.target.value)}
-                          />
-                          <Textarea
-                            placeholder="Bug Description"
-                            value={bugDescription}
-                            onChange={(e) => setBugDescription(e.target.value)}
-                          />
-                          <Button
-                            onClick={handleSubmitBug}
-                            disabled={!bugName || !bugDescription}
-                          >
-                            Submit
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-
-                    <Button
-                      variant={isSaved ? "outline" : "default"}
-                      size="sm"
-                      disabled={isSaved}
-                      onClick={() => handleSave(agent.agent_id)}
-                      className="mt-4"
-                    >
-                      {isSaved ? "Already in Repository" : "Save to Repository"}
-                    </Button>
-                  </div>
-                </div>
-              )
-            })}
+            <div className="text-sm mt-2 flex items-start gap-2">
+              <Tags className="w-4 h-4 text-muted-foreground mt-1" />
+              <div className="flex flex-wrap gap-2">
+                {agent.tags.split(",").map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-black text-white px-2 py-1 rounded-full text-xs font-medium"
+                  >
+                    {tag.trim()}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="text-sm flex items-center gap-2">
+              <DatabaseZap className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium text-gray-800">Supported Providers:</span>{" "}
+              {agent.supported_providers.join(", ")}
+            </div>
+            <div className="text-sm flex items-center gap-2">
+              <Mail className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium text-gray-800">Developer Contact:</span>{" "}
+              {agent.developer_contact}
+            </div>
+            <div className="text-sm flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium text-gray-800">Cost per Execution:</span> ${agent.cost_per_execution}
+            </div>
           </div>
+
+          <div className="flex flex-col justify-between items-end gap-2">
+            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setSelectedAgentId(agent.agent_id)}
+                >
+                  <Bug size={16} /> Report Bug
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Report Bug</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Bug Title"
+                    value={bugName}
+                    onChange={(e) => setBugName(e.target.value)}
+                  />
+                  <Textarea
+                    placeholder="Bug Description"
+                    value={bugDescription}
+                    onChange={(e) => setBugDescription(e.target.value)}
+                  />
+                  <Button
+                    onClick={handleSubmitBug}
+                    disabled={!bugName || !bugDescription}
+                  >
+                    Submit
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Button
+              variant={isSaved ? "outline" : "default"}
+              size="sm"
+              disabled={isSaved}
+              onClick={() => handleSave(agent.agent_id)}
+              className="mt-4"
+            >
+              {isSaved ? "Already in Repository" : "Save to Repository"}
+            </Button>
+          </div>
+        </div>
+      )
+    })}
+</div>
         </div>
       </SidebarInset>
     </SidebarProvider>

@@ -74,7 +74,7 @@ export default function OnboardingPage() {
           localStorage.setItem("user", JSON.stringify(userData))
           localStorage.setItem("show_key_modal", "false")
           setUser(userData)
-          router.push("/tasks")
+          router.push("/dashboard")
           return
         }
 
@@ -146,7 +146,7 @@ export default function OnboardingPage() {
       const orgData = await createOrgRes.json()
       console.log("Organization created:", orgData)
       setStatus("org_created")
-      setTimeout(() => router.push("/tasks"), 1500)
+      setTimeout(() => router.push("/dashboard"), 1500)
     } catch (err) {
       console.error("Error creating organization:", err)
       setStatus("error")
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
       setJoinMessage(data.message)
   
       localStorage.setItem("user", JSON.stringify({ ...parsed, organization: data.organization_id }))
-      setTimeout(() => router.push("/tasks"), 1500)
+      setTimeout(() => router.push("/dashboard"), 1500)
     } catch (err) {
       setJoinStatus("error")
       setJoinMessage("Something went wrong.")
@@ -312,13 +312,6 @@ export default function OnboardingPage() {
               )}
             </CardContent>
           </Card>
-
-          <div className="text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
-            By clicking continue, you agree to our{" "}
-            <a href="/privacy target="_blank" className="underline">
-              Terms of Service
-            </a>{" "}
-          </div>
         </div>
       </div>
     </div>
