@@ -1,13 +1,12 @@
 'use client'
 
+import { useEffect, useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
@@ -17,8 +16,36 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function Page() {
+  const [limits, setLimits] = useState<any[]>([])
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    const storedLimits = localStorage.getItem("taskLimits")
+    if (storedLimits) setLimits(JSON.parse(storedLimits))
+  }, [])
+
+  const addLimit = (limit: any) => {
+    const updated = [...limits, limit]
+    setLimits(updated)
+    localStorage.setItem("taskLimits", JSON.stringify(updated))
+  }
+
+  const deleteLimit = (index: number) => {
+    const updated = [...limits.slice(0, index), ...limits.slice(index + 1)]
+    setLimits(updated)
+    localStorage.setItem("taskLimits", JSON.stringify(updated))
+  }
+
   return (
     <>
       <SidebarProvider>
@@ -39,34 +66,94 @@ export default function Page() {
               </Breadcrumb>
             </div>
           </header>
-          
+
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pr-10">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold">Budgets</h1>
-          </div>
-
-          <div className="grid auto-rows-min gap-4 md:grid-cols-2">
-            <div className="aspect-video rounded-xl bg-muted/50 p-4">
-              <h2 className="text-lg font-medium">Costs</h2>
-              <p className="text-sm text-muted-foreground">No monitoring jobs set up</p>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-semibold">Budgets</h1>
             </div>
-            <div className="aspect-video rounded-xl bg-muted/50 p-4">
-              <h2 className="text-lg font-medium">Alerts</h2>
-              <p className="text-sm text-muted-foreground">This screen serves as a hub for task automation and scheduling, where users can configure and manage routine AI-driven processes without needing to code.</p>
-            </div>
-          </div>
 
-          <div className="flex gap-3">
-            <Link href="#">
-              <Button className="bg-black text-white hover:bg-black/90">Set limits</Button>
-            </Link>
-            <Link href="#">
-              <Button variant="outline">Set alerts</Button>
-            </Link>
-          </div>
+            <div className="grid auto-rows-min gap-4 md:grid-cols-2">
+              <div className="aspect-video rounded-xl bg-muted/50 p-4">
+                <h2 className="text-lg font-medium">Limits</h2>
+                {limits.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No task limits set up</p>
+                ) : (
+                  <div className="mt-2 overflow-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left">
+                          <th className="pr-4">Start Date</th>
+                          <th className="pr-4">End Date</th>
+                          <th className="pr-4">Amount</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {limits.map((limit, idx) => (
+                          <tr key={idx}>
+                            <td className="pr-4">{limit.start}</td>
+                            <td className="pr-4">{limit.end}</td>
+                            <td className="pr-4">{limit.amount}</td>
+                            <td>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => deleteLimit(idx)}
+                              >
+                                Delete
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              <div className="aspect-video rounded-xl bg-muted/50 p-4">
+                <h2 className="text-lg font-medium">Alerts</h2>
+                <p className="text-sm text-muted-foreground">No alerts have been raised till now.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-black text-white hover:bg-black/90">Set limits</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogTitle className="sr-only">Set Task Limits</DialogTitle>
+                  <form className="grid gap-4" onSubmit={(e) => {
+                    e.preventDefault()
+                    const formData = new FormData(e.currentTarget)
+                    const data = {
+                      start: formData.get("start-date"),
+                      end: formData.get("end-date"),
+                      amount: formData.get("amount"),
+                    }
+                    addLimit(data)
+                    setOpen(false)
+                  }}>
+                    <div className="grid gap-2">
+                      <Label>Start Date</Label>
+                      <Input name="start-date" type="date" required />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>End Date</Label>
+                      <Input name="end-date" type="date" required />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Amount</Label>
+                      <Input name="amount" type="number" required />
+                    </div>
+                    <Button type="submit">Add Limit</Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </SidebarInset>
-    </SidebarProvider>
+      </SidebarProvider>
     </>
-  );
+  )
 }

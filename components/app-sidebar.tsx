@@ -38,9 +38,16 @@ import Image from "next/image"
 import fullLogo from "@/public/full-logo.png"
 import accountIcon from "@/public/account.png"
 
+const dummyUser = {
+  id: "loading",
+  name: "Loading...",
+  email: "loading@example.com",
+  avatar: "https://via.placeholder.com/40", // Placeholder avatar
+};
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter()
-  const [user, setUser] = React.useState<{ id: string; name: string; email: string; avatar: string } | null>(null)
+  const [user, setUser] = React.useState<{ id: string; name: string; email: string; avatar: string } | null>(dummyUser)
   const [orgs, setOrgs] = React.useState<Array<{ name: string; id: string; logo: any; plan: string }>>([])
   const [selectedOrg, setSelectedOrg] = React.useState<any>(null)
 
@@ -104,11 +111,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Platform",
       items: [
-        // { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+        { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
         { title: "Tasks", url: "/tasks", icon: CircleCheckBig },
         { title: "Repository", url: "/repository", icon: FolderGit2 },
         { title: "Marketplace", url: "/marketplace", icon: ShoppingCart },
-        // { title: "Budgets", url: "/budgets", icon: CircleDollarSign },
+        { title: "Budgets", url: "/budgets", icon: CircleDollarSign },
       ],
     },
     {
