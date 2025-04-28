@@ -10,41 +10,39 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
+import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+
+const COLORS = ["#4ade80", "#facc15", "#f87171"]; // green, yellow, red
+
+const dummySpend = 450
+const dummyLimit = 500
 
 export default function Page() {
-  const [limits, setLimits] = useState<any[]>([])
   const [open, setOpen] = useState(false)
+  const [selectedRange, setSelectedRange] = useState("month")
 
-  useEffect(() => {
-    const storedLimits = localStorage.getItem("taskLimits")
-    if (storedLimits) setLimits(JSON.parse(storedLimits))
-  }, [])
+  const [limit, setLimit] = useState(dummyLimit)
+  const [spend, setSpend] = useState(dummySpend)
 
-  const addLimit = (limit: any) => {
-    const updated = [...limits, limit]
-    setLimits(updated)
-    localStorage.setItem("taskLimits", JSON.stringify(updated))
-  }
+  const costData = [
+    { name: 'Spent', value: dummySpend },
+    { name: 'Remaining', value: Math.max(limit - spend, 0) },
+  ]
 
-  const deleteLimit = (index: number) => {
-    const updated = [...limits.slice(0, index), ...limits.slice(index + 1)]
-    setLimits(updated)
-    localStorage.setItem("taskLimits", JSON.stringify(updated))
-  }
+  const [tableData, setTableData] = useState([
+    { date: '2025-04-27', task: 'Task A', count: 10, cost: 100 },
+    { date: '2025-04-27', task: 'Task B', count: 5, cost: 200 },
+    { date: '2025-04-26', task: 'Task C', count: 2, cost: 50 },
+  ])
+
+  const utilization = (spend / limit) * 100
+  const utilizationColor = utilization < 90 ? "#4ade80" : utilization <= 100 ? "#facc15" : "#f87171"
 
   return (
     <>
@@ -58,9 +56,7 @@ export default function Page() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="#">
-                      Budgets
-                    </BreadcrumbLink>
+                    <BreadcrumbLink href="#">Budgets</BreadcrumbLink>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
@@ -70,86 +66,127 @@ export default function Page() {
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pr-10">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-semibold">Budgets</h1>
+
+              {/* Day/Week/Month Selector */}
+              <ToggleGroup
+                type="single"
+                value={selectedRange}
+                onValueChange={(value) => value && setSelectedRange(value)}
+              >
+                <ToggleGroupItem value="day">Day</ToggleGroupItem>
+                <ToggleGroupItem value="week">Week</ToggleGroupItem>
+                <ToggleGroupItem value="month">Month</ToggleGroupItem>
+              </ToggleGroup>
             </div>
 
-            <div className="grid auto-rows-min gap-4 md:grid-cols-2">
-              <div className="aspect-video rounded-xl bg-muted/50 p-4">
-                <h2 className="text-lg font-medium">Limits</h2>
-                {limits.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No task limits set up</p>
-                ) : (
-                  <div className="mt-2 overflow-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left">
-                          <th className="pr-4">Start Date</th>
-                          <th className="pr-4">End Date</th>
-                          <th className="pr-4">Amount</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {limits.map((limit, idx) => (
-                          <tr key={idx}>
-                            <td className="pr-4">{limit.start}</td>
-                            <td className="pr-4">{limit.end}</td>
-                            <td className="pr-4">{limit.amount}</td>
-                            <td>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => deleteLimit(idx)}
-                              >
-                                Delete
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+            {/* Spends Section */}
+            <div className="rounded-xl bg-muted/50 p-8 flex flex-col gap-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium">Spends</h2>
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline">Edit Limit</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogTitle>Update Limit</DialogTitle>
+                    <form className="grid gap-4" onSubmit={(e) => {
+                      e.preventDefault()
+                      const formData = new FormData(e.currentTarget)
+                      const newLimit = formData.get("amount")
+                      if (newLimit) {
+                        setLimit(Number(newLimit))
+                      }
+                      setOpen(false)
+                    }}>
+                      <div className="grid gap-2">
+                        <Label>Amount</Label>
+                        <Input name="amount" type="number" required defaultValue={limit} />
+                      </div>
+                      <Button type="submit">Save</Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {/* Flex container for PieChart + Spend + Limit */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-8 px-40 py-2">
+                
+                {/* Pie Chart */}
+                <div className="relative w-36 h-36">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        startAngle={90}
+                        endAngle={-270}
+                        data={[
+                          { name: 'Spent', value: spend },
+                          { name: 'Remaining', value: Math.max(limit - spend, 0) },
+                        ]}
+                        dataKey="value"
+                        innerRadius={60}
+                        outerRadius={70}
+                        animationDuration={800}
+                        isAnimationActive
+                      >
+                        <Cell fill={utilizationColor} />
+                        <Cell fill="#e5e7eb" />
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold">{Math.round(utilization)}%</span>
+                    <span className="text-xs text-muted-foreground">utilized</span>
                   </div>
-                )}
-              </div>
-              <div className="aspect-video rounded-xl bg-muted/50 p-4">
-                <h2 className="text-lg font-medium">Alerts</h2>
-                <p className="text-sm text-muted-foreground">No alerts have been raised till now.</p>
+                </div>
+
+                {/* Total Spend */}
+                <div className="flex flex-col items-center">
+                  <div className="text-5xl font-bold" style={{ color: utilizationColor }}>
+                    ${spend}
+                  </div>
+                  <div className="text-muted-foreground">Total Spend</div>
+                </div>
+
+                {/* Current Limit */}
+                <div className="flex flex-col items-center">
+                  <div className="text-5xl font-bold text-gray-700">
+                    ${limit}
+                  </div>
+                  <div className="text-muted-foreground">Current Limit</div>
+                </div>
+
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-black text-white hover:bg-black/90">Set limits</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogTitle className="sr-only">Set Task Limits</DialogTitle>
-                  <form className="grid gap-4" onSubmit={(e) => {
-                    e.preventDefault()
-                    const formData = new FormData(e.currentTarget)
-                    const data = {
-                      start: formData.get("start-date"),
-                      end: formData.get("end-date"),
-                      amount: formData.get("amount"),
-                    }
-                    addLimit(data)
-                    setOpen(false)
-                  }}>
-                    <div className="grid gap-2">
-                      <Label>Start Date</Label>
-                      <Input name="start-date" type="date" required />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>End Date</Label>
-                      <Input name="end-date" type="date" required />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Amount</Label>
-                      <Input name="amount" type="number" required />
-                    </div>
-                    <Button type="submit">Add Limit</Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
+
+
+            {/* Table Section */}
+            <div className="rounded-xl bg-muted/50 p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium">Task Spend History</h2>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>S.no</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Task Name</TableHead>
+                    <TableHead>Execution Count</TableHead>
+                    <TableHead>Total Cost</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tableData.map((row, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{idx + 1}</TableCell>
+                      <TableCell>{row.date}</TableCell>
+                      <TableCell>{row.task}</TableCell>
+                      <TableCell>{row.count}</TableCell>
+                      <TableCell>${row.cost}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </div>
         </SidebarInset>
