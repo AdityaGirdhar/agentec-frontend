@@ -25,7 +25,11 @@ const dummyLimit = 500
 
 export default function Page() {
   const [open, setOpen] = useState(false)
+<<<<<<< HEAD
   const [selectedRange, setSelectedRange] = useState("month")
+=======
+  const [showHelpModal, setShowHelpModal] = useState(false)
+>>>>>>> 40668f752b9918e8899756f07784492ee08f9cef
 
   const [limit, setLimit] = useState(dummyLimit)
   const [spend, setSpend] = useState(dummySpend)
@@ -190,6 +194,26 @@ export default function Page() {
             </div>
           </div>
         </SidebarInset>
+        {showHelpModal && (
+  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+    <div className="bg-white rounded-lg p-6 w-full max-w-xl shadow-xl relative">
+      <h2 className="text-lg font-semibold mb-4">Help - Budgets Page</h2>
+      <div className="space-y-4 text-sm text-muted-foreground">
+        <p><strong>Limits:</strong> You can set custom spending limits for specific date ranges. These are stored in your browser's local storage.</p>
+        <p><strong>Adding Limits:</strong> Click "Set limits" to add a new budget limit by selecting start and end dates and a budget amount.</p>
+        <p><strong>Deleting Limits:</strong> Use the "Delete" button beside a limit to remove it.</p>
+        <p><strong>Alerts:</strong> This section will show budget breach alerts in the future, once integrated with task execution tracking.</p>
+      </div>
+      <Button
+        className="absolute top-3 right-3 text-sm px-2 py-1"
+        variant="ghost"
+        onClick={() => setShowHelpModal(false)}
+      >
+        Close
+      </Button>
+    </div>
+  </div>
+)}
       </SidebarProvider>
     </>
   )
