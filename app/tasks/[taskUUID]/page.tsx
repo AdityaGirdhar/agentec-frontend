@@ -115,7 +115,7 @@ export default function TaskPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto px-6">
+          <div className="flex-1 overflow-auto px-6 pb-2">
             {activeTab === "execution"
               ? <TaskExecutionTab taskUUID={taskUUID as string} />
               : <TaskAnalysisTab taskUUID={taskUUID as string} />

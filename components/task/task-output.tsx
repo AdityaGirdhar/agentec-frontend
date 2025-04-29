@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, Info, KeyRound, Bot } from "lucide-react"
+import ReactMarkdown from "react-markdown"
 
 interface TaskOutputProps {
   executions: any[]
@@ -21,10 +22,8 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
 
   const hasExecutions = executions.length > 0
 
-  // Fetch user names for all executions
   useEffect(() => {
     const uniqueUserIds = Array.from(new Set(executions.map(exec => exec.user_id)))
-
     Promise.all(
       uniqueUserIds.map(id =>
         fetch(`http://localhost:8000/users/get_user_info?user_id=${id}`)
@@ -39,10 +38,8 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
     })
   }, [executions])
 
-  // Fetch additional info for selected execution
   useEffect(() => {
     if (!selectedExecution) return
-
     const { input, agent_id, user_id } = selectedExecution
     const keyId = input?.key_id
 
@@ -51,8 +48,6 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
         .then(res => res.json())
         .then(setKeyInfo)
         .catch(() => setKeyInfo(null))
-    } else {
-      setKeyInfo(null)
     }
 
     if (agent_id) {
@@ -60,8 +55,6 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
         .then(res => res.json())
         .then(setAgentInfo)
         .catch(() => setAgentInfo(null))
-    } else {
-      setAgentInfo(null)
     }
 
     if (user_id) {
@@ -69,8 +62,6 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
         .then(res => res.json())
         .then(setUserInfo)
         .catch(() => setUserInfo(null))
-    } else {
-      setUserInfo(null)
     }
   }, [selectedExecution])
 
@@ -98,7 +89,7 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
           )}
         </AnimatePresence>
 
-        {/* Main Output */}
+        {/* Output Section */}
         <div className="flex-1 overflow-y-auto px-6 py-4 scrollbar-thin relative z-0">
           <AnimatePresence mode="wait">
             {selectedExecution ? (
@@ -110,30 +101,24 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
                 transition={{ duration: 0.4 }}
                 className="bg-white p-6 rounded-md shadow-md relative"
               >
-                {/* Info Icon */}
                 <div className="absolute top-4 right-4 group">
                   <Info size={18} className="text-gray-400 group-hover:text-black transition" />
                   <div className="absolute right-6 top-1/2 -translate-y-1/2 bg-black text-white text-xs rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap text-left">
-                    <div>
-                      {new Date(selectedExecution.creation_time).toLocaleString()}
-                    </div>
-                    <div>
-                      Execution #{selectedExecution.sequence_number || executions.length}
-                    </div>
+                    <div>{new Date(selectedExecution.creation_time).toLocaleString()}</div>
+                    <div>Execution #{selectedExecution.sequence_number || executions.length}</div>
                     {userInfo?.name && (
                       <div className="mt-1 text-gray-300">By {userInfo.name}</div>
                     )}
                   </div>
                 </div>
 
-                {/* Query */}
+                {/* Query Section */}
                 <div className="mb-6">
                   <div className="text-xs uppercase text-gray-500 mb-2 tracking-widest">Your Query</div>
                   <div className="bg-gray-50 rounded-md p-4 text-sm whitespace-pre-wrap mb-3">
                     {selectedExecution.input.query}
                   </div>
 
-                  {/* Input Params */}
                   <div className="flex flex-wrap gap-3 items-center text-xs text-gray-600">
                     {selectedExecution.input.provider && (
                       <div className="px-2 py-1 bg-gray-100 rounded">
@@ -155,11 +140,11 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
                   </div>
                 </div>
 
-                {/* Output */}
+                {/* Markdown Output */}
                 <div>
                   <div className="text-xs uppercase text-gray-500 mb-2 tracking-widest">Agent Response</div>
-                  <div className="bg-gray-50 rounded-md p-4 text-sm whitespace-pre-wrap">
-                    {selectedExecution.output.output_text}
+                  <div className="bg-gray-50 rounded-md p-4 text-sm prose max-w-none prose-headings:mt-2 prose-headings:mb-1 prose-p:leading-relaxed">
+                    <ReactMarkdown>{selectedExecution.output.output_text || "No response."}</ReactMarkdown>
                   </div>
                 </div>
               </motion.div>
@@ -177,7 +162,7 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
           </AnimatePresence>
         </div>
 
-        {/* Menu */}
+        {/* Sidebar */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div
@@ -215,9 +200,7 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.3 }}
                       className={`w-full text-left border p-2 rounded text-sm transition relative ${
-                        isSelected
-                          ? "bg-black text-white shadow-md"
-                          : "hover:bg-gray-50"
+                        isSelected ? "bg-black text-white shadow-md" : "hover:bg-gray-50"
                       }`}
                       onClick={() => {
                         setSelectedIndex(idx)
