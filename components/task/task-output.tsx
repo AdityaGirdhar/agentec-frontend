@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X } from "lucide-react"
+import { Menu, X, Info, KeyRound, Bot } from "lucide-react"
 
 interface TaskOutputProps {
   executions: any[]
@@ -11,10 +11,39 @@ interface TaskOutputProps {
 export default function TaskOutput({ executions }: TaskOutputProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [keyInfo, setKeyInfo] = useState<any | null>(null)
+  const [agentInfo, setAgentInfo] = useState<any | null>(null)
 
   const selectedExecution =
     selectedIndex !== null ? executions[selectedIndex] : executions[executions.length - 1]
+
   const hasExecutions = executions.length > 0
+
+  // Fetch additional details when selectedExecution changes
+  useEffect(() => {
+    if (!selectedExecution) return
+
+    const { input, agent_id } = selectedExecution
+    const keyId = input?.key_id
+
+    if (keyId) {
+      fetch(`http://localhost:8000/users/get_key_info?key_id=${keyId}`)
+        .then(res => res.json())
+        .then(setKeyInfo)
+        .catch(() => setKeyInfo(null))
+    } else {
+      setKeyInfo(null)
+    }
+
+    if (agent_id) {
+      fetch(`http://localhost:8000/agents/get_agent_info?agent_id=${agent_id}`)
+        .then(res => res.json())
+        .then(setAgentInfo)
+        .catch(() => setAgentInfo(null))
+    } else {
+      setAgentInfo(null)
+    }
+  }, [selectedExecution])
 
   return (
     <div className="relative overflow-hidden border rounded-xl bg-muted/50 flex flex-col min-h-[320px]">
@@ -42,7 +71,7 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
         </AnimatePresence>
 
         {/* Execution Content */}
-        <div className="flex-1 overflow-y-auto px-4 pt-4 scrollbar-thin relative z-0">
+        <div className="flex-1 overflow-y-auto px-6 pt-6 scrollbar-thin relative z-0">
           <AnimatePresence mode="wait">
             {selectedExecution ? (
               <motion.div
@@ -51,22 +80,52 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.4 }}
-                className="border bg-white px-4 py-3 rounded-md shadow-sm min-h-[250px]"
+                className="bg-white p-6 rounded-md shadow-md relative"
               >
-                <div className="text-sm font-medium">
-                  Execution #{selectedExecution.sequence_number || executions.length}
+                {/* Info Icon */}
+                <div className="absolute top-4 right-4 group">
+                  <Info size={18} className="text-gray-400 group-hover:text-black transition" />
+                  <div className="absolute right-6 top-1/2 -translate-y-1/2 bg-black text-white text-xs rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                    {new Date(selectedExecution.creation_time).toLocaleString()} <br />
+                    Execution #{selectedExecution.sequence_number || executions.length}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-600">
-                  {new Date(selectedExecution.creation_time).toLocaleString()}
+
+                {/* Query Section */}
+                <div className="mb-6">
+                  <div className="text-xs uppercase text-gray-500 mb-2 tracking-widest">Your Query</div>
+                  <div className="bg-gray-50 rounded-md p-4 text-sm whitespace-pre-wrap mb-3">
+                    {selectedExecution.input.query}
+                  </div>
+
+                  {/* Parameters */}
+                  <div className="flex flex-wrap gap-3 items-center text-xs text-gray-600">
+                    {selectedExecution.input.provider && (
+                      <div className="px-2 py-1 bg-gray-100 rounded">
+                        Provider: <span className="font-medium text-gray-800">{selectedExecution.input.provider}</span>
+                      </div>
+                    )}
+                    {keyInfo && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
+                        <KeyRound size={14} className="text-gray-700" />
+                        <span className="font-medium text-gray-800">{keyInfo.name}</span>
+                      </div>
+                    )}
+                    {agentInfo && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
+                        <Bot size={14} className="text-gray-700" />
+                        <span className="font-medium text-gray-800">{agentInfo.name}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="mt-2">
-                  <strong>Prompt:</strong> {selectedExecution.input.query}
-                </div>
-                <div className="mt-1">
-                  <strong>Output:</strong>
-                  <pre className="text-sm mt-1 whitespace-pre-wrap">
+
+                {/* Output Section */}
+                <div>
+                  <div className="text-xs uppercase text-gray-500 mb-2 tracking-widest">Agent Response</div>
+                  <div className="bg-gray-50 rounded-md p-4 text-sm whitespace-pre-wrap">
                     {selectedExecution.output.output_text}
-                  </pre>
+                  </div>
                 </div>
               </motion.div>
             ) : (
