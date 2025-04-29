@@ -13,6 +13,7 @@ interface AgentInputProps {
   taskId: string
   userId: string
   onDeselectAgent: () => void
+  refreshExecutions: () => void
 }
 
 interface KeyItem {
@@ -27,7 +28,8 @@ export default function AgentInput({
   agentId,
   taskId,
   userId,
-  onDeselectAgent
+  onDeselectAgent,
+  refreshExecutions
 }: AgentInputProps) {
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({})
   const [query, setQuery] = useState("")
@@ -67,8 +69,6 @@ export default function AgentInput({
       const data = await res.json()
 
       if (data.status === "Success") {
-        console.log("Output JSON:", data.output)
-
         const executionPayload = {
           user_id: userId,
           task_id: taskId,
@@ -84,12 +84,13 @@ export default function AgentInput({
           body: JSON.stringify(executionPayload),
         })
 
+        refreshExecutions()
+
         toast({
           title: "Execution Completed",
           description: "Execution saved successfully.",
           variant: "success",
         })
-
       } else if (data.status === "Failed") {
         toast({
           title: "Execution Failed",

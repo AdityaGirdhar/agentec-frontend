@@ -12,6 +12,12 @@ export default function TaskExecutionTab({ taskUUID }: { taskUUID: string }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [userId, setUserId] = useState<string>("")
 
+  const fetchExecutions = async () => {
+    const res = await fetch(`http://localhost:8000/tasks/get-executions?task_id=${taskUUID}`)
+    const data = await res.json()
+    setExecutions(Array.isArray(data) ? data : [])
+  }
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user")
     if (!storedUser) return
@@ -30,12 +36,7 @@ export default function TaskExecutionTab({ taskUUID }: { taskUUID: string }) {
         setAgents(agentDetails)
       })
 
-    fetch(`http://localhost:8000/tasks/get-executions?task_id=${taskUUID}`)
-      .then(res => res.json())
-      .then(data => {
-        const execData = Array.isArray(data) ? data : []
-        setExecutions(execData)
-      })
+    fetchExecutions()
   }, [taskUUID])
 
   const clearAgentSelection = () => {
@@ -60,6 +61,7 @@ export default function TaskExecutionTab({ taskUUID }: { taskUUID: string }) {
             taskId={taskUUID}
             userId={userId}
             onDeselectAgent={clearAgentSelection}
+            refreshExecutions={fetchExecutions}
           />
         ) : (
           <div className="flex flex-col justify-center items-center gap-4">
