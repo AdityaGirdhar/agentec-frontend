@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
+import AgentInput from "@/components/agent/agent-input"
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator
 } from "@/components/ui/breadcrumb"
@@ -373,32 +374,18 @@ export default function TaskPage() {
   </div>
 
   <div className="shrink-0 py-3 border-t bg-muted/50 px-4 mt-2">
-    <div className="flex items-center gap-2">
-      <textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        placeholder="Ask something..."
-        className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-      />
-      <Button
-  className="bg-black text-white hover:bg-black/90 flex items-center gap-2"
-  onClick={handleSend}
-  disabled={loading || !selectedAgent || !selectedKey || !prompt.trim()}
->
-  {loading ? (
-    <>
-      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8z" />
-      </svg>
-      Waiting...
-    </>
+  {selectedAgent ? (
+    <AgentInput
+      baseApi={agents.find(agent => agent.id === selectedAgent)?.technical_info?.base_api || ""}
+      inputFields={agents.find(agent => agent.id === selectedAgent)?.technical_info?.input_fields || {}}
+    />
   ) : (
-    "Send"
-  )}
-</Button>
+    <div className="flex-1 flex flex-col justify-center items-center gap-2 text-muted-foreground text-center px-6">
+      <div className="text-lg font-semibold">No Agent Selected</div>
+      <div className="text-sm">Please choose an agent from the dropdown above to start interacting.</div>
     </div>
-  </div>
+  )}
+</div>
 </div>
           </div>
         </div>
