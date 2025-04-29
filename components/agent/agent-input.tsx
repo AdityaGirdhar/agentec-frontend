@@ -8,6 +8,8 @@ import { ChevronUp, X } from "lucide-react"
 interface AgentInputProps {
   baseApi: string
   inputFields: Record<string, any>
+  agentName: string
+  onDeselectAgent: () => void
 }
 
 interface KeyItem {
@@ -15,7 +17,7 @@ interface KeyItem {
   name: string
 }
 
-export default function AgentInput({ baseApi, inputFields }: AgentInputProps) {
+export default function AgentInput({ baseApi, inputFields, agentName, onDeselectAgent }: AgentInputProps) {
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({})
   const [query, setQuery] = useState("")
   const [keys, setKeys] = useState<KeyItem[]>([])
@@ -56,11 +58,7 @@ export default function AgentInput({ baseApi, inputFields }: AgentInputProps) {
   }
 
   const toggleDropdown = (key: string) => {
-    if (dropdownOpen === key) {
-      setDropdownOpen(null)
-    } else {
-      setDropdownOpen(key)
-    }
+    setDropdownOpen(dropdownOpen === key ? null : key)
   }
 
   const clearField = (key: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -89,7 +87,7 @@ export default function AgentInput({ baseApi, inputFields }: AgentInputProps) {
       </div>
 
       <div className="border-t p-3 flex items-center justify-between gap-2">
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
           {Object.keys(inputFields).map((key) => {
             const isDropdown = inputFields[key].dropdown_select
             const isKeySelect = inputFields[key].key_select !== undefined
@@ -139,14 +137,34 @@ export default function AgentInput({ baseApi, inputFields }: AgentInputProps) {
           })}
         </div>
 
-        <Button
-          size="icon"
-          className="ml-auto"
-          disabled={!allFieldsSelected()}
-          onClick={handleSend}
-        >
-          <ChevronUp size={20} />
-        </Button>
+        <div className="flex items-center gap-2">
+
+
+          <div className="relative">
+            <Button
+              variant="default"
+              className="bg-black text-white hover:ring-2 hover:ring-gray-300 rounded-md px-4 flex items-center gap-1 cursor-default"
+            >
+              {agentName}
+            </Button>
+            <button
+              type="button"
+              onClick={onDeselectAgent}
+              className="absolute -right-2 -top-2 bg-white border border-gray-300 text-red-600 rounded-full p-1 hover:bg-gray-100"
+            >
+              <X size={14} />
+            </button>
+            
+          </div>
+          <Button
+            size="icon"
+            className="bg-black text-white hover:bg-black/90"
+            disabled={!allFieldsSelected()}
+            onClick={handleSend}
+          >
+            <ChevronUp size={20} />
+          </Button>
+        </div>
       </div>
     </div>
   )
