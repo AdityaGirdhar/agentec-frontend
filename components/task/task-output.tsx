@@ -13,17 +13,37 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [keyInfo, setKeyInfo] = useState<any | null>(null)
   const [agentInfo, setAgentInfo] = useState<any | null>(null)
+  const [userInfo, setUserInfo] = useState<any | null>(null)
+  const [userMap, setUserMap] = useState<Record<string, string>>({})
 
   const selectedExecution =
     selectedIndex !== null ? executions[selectedIndex] : executions[executions.length - 1]
 
   const hasExecutions = executions.length > 0
 
-  // Fetch additional details when selectedExecution changes
+  // Fetch user names for all executions
+  useEffect(() => {
+    const uniqueUserIds = Array.from(new Set(executions.map(exec => exec.user_id)))
+
+    Promise.all(
+      uniqueUserIds.map(id =>
+        fetch(`http://localhost:8000/users/get_user_info?user_id=${id}`)
+          .then(res => res.json())
+          .then(data => ({ id, name: data.name }))
+          .catch(() => ({ id, name: "Unknown User" }))
+      )
+    ).then(userList => {
+      const map: Record<string, string> = {}
+      userList.forEach(u => (map[u.id] = u.name))
+      setUserMap(map)
+    })
+  }, [executions])
+
+  // Fetch additional info for selected execution
   useEffect(() => {
     if (!selectedExecution) return
 
-    const { input, agent_id } = selectedExecution
+    const { input, agent_id, user_id } = selectedExecution
     const keyId = input?.key_id
 
     if (keyId) {
@@ -43,6 +63,15 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
     } else {
       setAgentInfo(null)
     }
+
+    if (user_id) {
+      fetch(`http://localhost:8000/users/get_user_info?user_id=${user_id}`)
+        .then(res => res.json())
+        .then(setUserInfo)
+        .catch(() => setUserInfo(null))
+    } else {
+      setUserInfo(null)
+    }
   }, [selectedExecution])
 
   return (
@@ -57,7 +86,6 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
       )}
 
       <div className="relative flex-1 flex overflow-hidden min-h-[320px]">
-        {/* Background blur when menu open */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div
@@ -70,8 +98,8 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
           )}
         </AnimatePresence>
 
-        {/* Execution Content */}
-        <div className="flex-1 overflow-y-auto px-6 pt-6 scrollbar-thin relative z-0">
+        {/* Main Output */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 scrollbar-thin relative z-0">
           <AnimatePresence mode="wait">
             {selectedExecution ? (
               <motion.div
@@ -85,20 +113,27 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
                 {/* Info Icon */}
                 <div className="absolute top-4 right-4 group">
                   <Info size={18} className="text-gray-400 group-hover:text-black transition" />
-                  <div className="absolute right-6 top-1/2 -translate-y-1/2 bg-black text-white text-xs rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
-                    {new Date(selectedExecution.creation_time).toLocaleString()} <br />
-                    Execution #{selectedExecution.sequence_number || executions.length}
+                  <div className="absolute right-6 top-1/2 -translate-y-1/2 bg-black text-white text-xs rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap text-left">
+                    <div>
+                      {new Date(selectedExecution.creation_time).toLocaleString()}
+                    </div>
+                    <div>
+                      Execution #{selectedExecution.sequence_number || executions.length}
+                    </div>
+                    {userInfo?.name && (
+                      <div className="mt-1 text-gray-300">By {userInfo.name}</div>
+                    )}
                   </div>
                 </div>
 
-                {/* Query Section */}
+                {/* Query */}
                 <div className="mb-6">
                   <div className="text-xs uppercase text-gray-500 mb-2 tracking-widest">Your Query</div>
                   <div className="bg-gray-50 rounded-md p-4 text-sm whitespace-pre-wrap mb-3">
                     {selectedExecution.input.query}
                   </div>
 
-                  {/* Parameters */}
+                  {/* Input Params */}
                   <div className="flex flex-wrap gap-3 items-center text-xs text-gray-600">
                     {selectedExecution.input.provider && (
                       <div className="px-2 py-1 bg-gray-100 rounded">
@@ -120,7 +155,7 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
                   </div>
                 </div>
 
-                {/* Output Section */}
+                {/* Output */}
                 <div>
                   <div className="text-xs uppercase text-gray-500 mb-2 tracking-widest">Agent Response</div>
                   <div className="bg-gray-50 rounded-md p-4 text-sm whitespace-pre-wrap">
@@ -142,11 +177,11 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
           </AnimatePresence>
         </div>
 
-        {/* Slide-in Menu */}
+        {/* Menu */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div
-              className="absolute left-0 top-0 h-full w-64 bg-white z-20 border-r shadow-lg flex flex-col"
+              className="absolute left-0 top-0 h-full w-80 bg-white z-20 border-r shadow-lg flex flex-col"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -189,11 +224,14 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
                         setMenuOpen(false)
                       }}
                     >
-                      <div className="font-medium">
-                        Execution #{exec.sequence_number || idx + 1}
+                      <div className="flex justify-between items-center font-medium">
+                        <span>Execution #{exec.sequence_number || idx + 1}</span>
+                        <span className="text-xs opacity-70">
+                          {new Date(exec.creation_time).toLocaleTimeString()}
+                        </span>
                       </div>
-                      <div className="text-xs opacity-80">
-                        {new Date(exec.creation_time).toLocaleString()}
+                      <div className="text-xs mt-1 text-gray-500">
+                        {userMap[exec.user_id] || "Unknown User"}
                       </div>
                     </motion.button>
                   )
