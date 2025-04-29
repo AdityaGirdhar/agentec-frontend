@@ -28,8 +28,21 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
       )}
 
       <div className="relative flex-1 flex overflow-hidden min-h-[320px]">
+        {/* Background blur when menu open */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              className="absolute inset-0 bg-black/10 backdrop-blur-sm z-10 cursor-pointer"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMenuOpen(false)}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Execution Content */}
-        <div className="flex-1 overflow-y-auto px-4 pt-4 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-4 pt-4 scrollbar-thin relative z-0">
           <AnimatePresence mode="wait">
             {selectedExecution ? (
               <motion.div
@@ -70,7 +83,7 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
           </AnimatePresence>
         </div>
 
-        {/* Side Menu */}
+        {/* Slide-in Menu */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div
@@ -98,23 +111,34 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
                   Show Latest
                 </button>
 
-                {executions.map((exec, idx) => (
-                  <button
-                    key={exec.id || idx}
-                    className={`w-full text-left border p-2 rounded text-sm transition ${
-                      selectedIndex === idx ? "bg-gray-100" : "hover:bg-gray-50"
-                    }`}
-                    onClick={() => {
-                      setSelectedIndex(idx)
-                      setMenuOpen(false)
-                    }}
-                  >
-                    <div className="font-medium">Execution #{exec.sequence_number || idx + 1}</div>
-                    <div className="text-xs text-gray-600">
-                      {new Date(exec.creation_time).toLocaleString()}
-                    </div>
-                  </button>
-                ))}
+                {executions.map((exec, idx) => {
+                  const isSelected = selectedIndex === idx || (selectedIndex === null && idx === executions.length - 1)
+                  return (
+                    <motion.button
+                      key={exec.id || idx}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className={`w-full text-left border p-2 rounded text-sm transition relative ${
+                        isSelected
+                          ? "bg-black text-white shadow-md"
+                          : "hover:bg-gray-50"
+                      }`}
+                      onClick={() => {
+                        setSelectedIndex(idx)
+                        setMenuOpen(false)
+                      }}
+                    >
+                      <div className="font-medium">
+                        Execution #{exec.sequence_number || idx + 1}
+                      </div>
+                      <div className="text-xs opacity-80">
+                        {new Date(exec.creation_time).toLocaleString()}
+                      </div>
+                    </motion.button>
+                  )
+                })}
               </div>
             </motion.div>
           )}
