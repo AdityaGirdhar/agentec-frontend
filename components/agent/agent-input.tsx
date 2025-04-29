@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ChevronUp, X } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
@@ -10,6 +9,9 @@ interface AgentInputProps {
   baseApi: string
   inputFields: Record<string, any>
   agentName: string
+  agentId: string
+  taskId: string
+  userId: string
   onDeselectAgent: () => void
 }
 
@@ -18,22 +20,26 @@ interface KeyItem {
   name: string
 }
 
-export default function AgentInput({ baseApi, inputFields, agentName, onDeselectAgent }: AgentInputProps) {
+export default function AgentInput({
+  baseApi,
+  inputFields,
+  agentName,
+  agentId,
+  taskId,
+  userId,
+  onDeselectAgent
+}: AgentInputProps) {
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({})
   const [query, setQuery] = useState("")
   const [keys, setKeys] = useState<KeyItem[]>([])
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null)
 
   useEffect(() => {
-    const user = localStorage.getItem("user")
-    if (user) {
-      const parsed = JSON.parse(user)
-      fetch(`http://localhost:8000/users/get_keys?user_id=${parsed.id}`)
-        .then(res => res.json())
-        .then(setKeys)
-        .catch(err => console.error("Failed to fetch keys", err))
-    }
-  }, [])
+    fetch(`http://localhost:8000/users/get_keys?user_id=${userId}`)
+      .then(res => res.json())
+      .then(setKeys)
+      .catch(err => console.error("Failed to fetch keys", err))
+  }, [userId])
 
   const allFieldsSelected = () => {
     return Object.keys(inputFields).every(key => {
@@ -54,20 +60,49 @@ export default function AgentInput({ baseApi, inputFields, agentName, onDeselect
     try {
       const res = await fetch(`http://localhost:8000/${baseApi}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(payload),
       })
 
       const data = await res.json()
-      console.log("Response:", data)
 
-      toast({
-        title: "Execution Completed",
-        description: "The agent finished running successfully.",
-      })
+      if (data.status === "Success") {
+        console.log("Output JSON:", data.output)
+
+        const executionPayload = {
+          user_id: userId,
+          task_id: taskId,
+          agent_id: agentId,
+          key_id: fieldValues["key_id"],
+          input: payload,
+          output: data.output,
+        }
+
+        await fetch(`http://localhost:8000/tasks/create-execution`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(executionPayload),
+        })
+
+        toast({
+          title: "Execution Completed",
+          description: "Execution saved successfully.",
+          variant: "success",
+        })
+
+      } else if (data.status === "Failed") {
+        toast({
+          title: "Execution Failed",
+          description: data.message || "Agent returned an error.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Unexpected Response",
+          description: "Unknown status received from the agent.",
+          variant: "destructive",
+        })
+      }
     } catch (err) {
       console.error("Failed to send data", err)
       toast({
@@ -90,10 +125,7 @@ export default function AgentInput({ baseApi, inputFields, agentName, onDeselect
 
   const formatLabel = (text: string) => {
     if (text.toLowerCase() === "key_id") return "Key"
-    return text
-      .split("_")
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ")
+    return text.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
   }
 
   return (
@@ -104,7 +136,7 @@ export default function AgentInput({ baseApi, inputFields, agentName, onDeselect
             placeholder="Enter your query..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="text-[15px] w-full text-base min-h-[20px] p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300 resize-y overflow-auto"
+            className="text-[15px] w-full min-h-[20px] p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300 resize-y overflow-auto"
           />
         </div>
       </div>
@@ -143,17 +175,17 @@ export default function AgentInput({ baseApi, inputFields, agentName, onDeselect
                 {dropdownOpen === key && (
                   <div className="absolute left-0 bottom-full mb-2 w-52 bg-white border rounded-md shadow-md z-50">
                     {(isDropdown ? inputFields[key].dropdown_select : keys).map((item: any, idx: number) => (
-  <button
-    key={isDropdown ? idx : item.id}
-    className={`block w-full px-4 py-2 text-[13px] hover:bg-gray-100 text-left ${idx !== 0 ? 'border-t border-gray-200' : ''}`}
-    onClick={() => {
-      setFieldValues(prev => ({ ...prev, [key]: isDropdown ? item : item.id }))
-      setDropdownOpen(null)
-    }}
-  >
-    {isDropdown ? item : item.name}
-  </button>
-))}
+                      <button
+                        key={isDropdown ? idx : item.id}
+                        className={`block w-full px-4 py-2 text-[13px] hover:bg-gray-100 text-left ${idx !== 0 ? 'border-t border-gray-200' : ''}`}
+                        onClick={() => {
+                          setFieldValues(prev => ({ ...prev, [key]: isDropdown ? item : item.id }))
+                          setDropdownOpen(null)
+                        }}
+                      >
+                        {isDropdown ? item : item.name}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
