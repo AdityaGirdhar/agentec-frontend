@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ChevronUp, X } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 interface AgentInputProps {
   baseApi: string
@@ -44,16 +45,36 @@ export default function AgentInput({ baseApi, inputFields, agentName, onDeselect
 
   const handleSend = async () => {
     const payload = { ...fieldValues, query }
+
+    toast({
+      title: "Execution Started",
+      description: "The agent is now processing your input.",
+    })
+
     try {
       const res = await fetch(`http://localhost:8000/${baseApi}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
         body: JSON.stringify(payload),
       })
+
       const data = await res.json()
       console.log("Response:", data)
+
+      toast({
+        title: "Execution Completed",
+        description: "The agent finished running successfully.",
+      })
     } catch (err) {
       console.error("Failed to send data", err)
+      toast({
+        title: "Execution Failed",
+        description: "Something went wrong while sending data.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -77,45 +98,31 @@ export default function AgentInput({ baseApi, inputFields, agentName, onDeselect
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4">
-        <Input
-          placeholder="Enter your query..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="text-base min-h-[48px] px-4"
-        />
+      <div className="flex-1 overflow-y-auto space-y-4 pb-2">
+        <div className="w-full">
+          <textarea
+            placeholder="Enter your query..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="text-[15px] w-full text-base min-h-[20px] p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300 resize-y overflow-auto"
+          />
+        </div>
       </div>
 
-      <div className="border-t p-3 flex items-center justify-between gap-2">
-        <div className="flex gap-2 flex-wrap items-center">
+      <div className="border-t pt-2 flex items-center justify-between gap-2">
+        <div className="flex gap-2 flex-wrap items-center relative z-10">
           {Object.keys(inputFields).map((key) => {
             const isDropdown = inputFields[key].dropdown_select
             const isKeySelect = inputFields[key].key_select !== undefined
             if (!isDropdown && !isKeySelect) return null
 
             return (
-              <div key={key} className="relative flex flex-col items-center">
-                {dropdownOpen === key && (
-                  <div className="absolute bottom-12 w-52 bg-white border rounded-md shadow-md z-10">
-                    {(isDropdown ? inputFields[key].dropdown_select : keys).map((item: any, idx: number) => (
-                      <button
-                        key={isDropdown ? idx : item.id}
-                        className="block w-full px-4 py-2 text-sm hover:bg-gray-100 text-left"
-                        onClick={() => {
-                          setFieldValues(prev => ({ ...prev, [key]: isDropdown ? item : item.id }))
-                          setDropdownOpen(null)
-                        }}
-                      >
-                        {isDropdown ? item : item.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div key={key} className="relative flex flex-col items-start">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => toggleDropdown(key)}
-                  className="flex items-center gap-1 relative"
+                  className="flex items-center gap-1 relative z-20"
                 >
                   {fieldValues[key] ? `${formatLabel(key)}: ${
                     isDropdown
@@ -132,14 +139,29 @@ export default function AgentInput({ baseApi, inputFields, agentName, onDeselect
                     </button>
                   )}
                 </Button>
+
+                {dropdownOpen === key && (
+                  <div className="absolute left-0 bottom-full mb-2 w-52 bg-white border rounded-md shadow-md z-50">
+                    {(isDropdown ? inputFields[key].dropdown_select : keys).map((item: any, idx: number) => (
+  <button
+    key={isDropdown ? idx : item.id}
+    className={`block w-full px-4 py-2 text-[13px] hover:bg-gray-100 text-left ${idx !== 0 ? 'border-t border-gray-200' : ''}`}
+    onClick={() => {
+      setFieldValues(prev => ({ ...prev, [key]: isDropdown ? item : item.id }))
+      setDropdownOpen(null)
+    }}
+  >
+    {isDropdown ? item : item.name}
+  </button>
+))}
+                  </div>
+                )}
               </div>
             )
           })}
         </div>
 
         <div className="flex items-center gap-2">
-
-
           <div className="relative">
             <Button
               variant="default"
@@ -154,7 +176,6 @@ export default function AgentInput({ baseApi, inputFields, agentName, onDeselect
             >
               <X size={14} />
             </button>
-            
           </div>
           <Button
             size="icon"

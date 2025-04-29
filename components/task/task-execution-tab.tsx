@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react"
 import AgentInput from "@/components/agent/agent-input"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
-} from "@/components/ui/dialog"
+import AgentSelectionModal from "@/components/modal/agent-selection"
 
 export default function TaskExecutionTab({ taskUUID }: { taskUUID: string }) {
   const [executions, setExecutions] = useState<any[]>([])
@@ -42,17 +39,44 @@ export default function TaskExecutionTab({ taskUUID }: { taskUUID: string }) {
     setSelectedAgent("")
   }
 
+  const handleSelectAgent = (agentId: string) => {
+    setSelectedAgent(agentId)
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      {executions.length > 0 && (
-        <div className="relative flex-1 overflow-hidden border rounded-xl bg-muted/50 flex flex-col mb-2">
-          <div className="flex-1 overflow-y-auto px-4 pt-4 space-y-4 scrollbar-thin">
-            {/* Replace this with actual render logic */}
-            <div>Execution list here</div>
-          </div>
+      {/* Execution History Box */}
+      <div className="relative overflow-hidden border rounded-xl bg-muted/50 flex flex-col min-h-[200px]">
+        <div className="flex-1 overflow-y-auto px-4 pt-4 space-y-4 scrollbar-thin">
+          {executions.length === 0 ? (
+            <div className="flex justify-center items-center text-muted-foreground text-lg h-full min-h-[160px]">
+              No Past Executions
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Replace this with actual execution rendering */}
+              {executions.map((exec: any, idx: number) => (
+                <div
+                  key={exec.id || idx}
+                  className="border bg-white px-4 py-3 rounded-md shadow-sm"
+                >
+                  <div className="text-sm font-medium">Execution #{exec.sequence_number || idx + 1}</div>
+                  <div className="text-xs text-gray-600">{new Date(exec.creation_time).toLocaleString()}</div>
+                  <div className="mt-2">
+                    <strong>Prompt:</strong> {exec.input_text}
+                  </div>
+                  <div className="mt-1">
+                    <strong>Output:</strong>
+                    <pre className="text-sm mt-1 whitespace-pre-wrap">{exec.output_text}</pre>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
+      {/* Agent Input or Selection */}
       <div className="border rounded-xl bg-muted/50 p-6">
         {selectedAgent ? (
           <AgentInput
@@ -63,55 +87,13 @@ export default function TaskExecutionTab({ taskUUID }: { taskUUID: string }) {
           />
         ) : (
           <div className="flex flex-col justify-center items-center gap-4">
-            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-              <DialogTrigger asChild>
-                <button
-                  onClick={() => setModalOpen(true)}
-                  className="bg-black text-white px-6 py-3 rounded-md text-base font-medium flex flex-col items-center hover:bg-black/90 transition"
-                >
-                  <span>Choose an Agent</span>
-                  <span className="text-xs text-muted-foreground">
-                    {executions.length === 0
-                      ? "First Execution"
-                      : `Execution ${executions.length + 1}`}
-                  </span>
-                </button>
-              </DialogTrigger>
-              <DialogContent className="max-w-5xl">
-                <DialogHeader>
-                  <DialogTitle>Select an Agent</DialogTitle>
-                </DialogHeader>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {agents.map(agent => (
-                    <div
-                      key={agent.id}
-                      className="border rounded-lg p-4 shadow-sm hover:shadow-md transition"
-                    >
-                      <h3 className="text-lg font-semibold mb-1">
-                        {agent.name.replace(/_/g, " ")}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {agent.marketplace_info?.description || "No description"}
-                      </p>
-                      <div className="text-xs mb-3">
-                        <strong>Providers:</strong>{" "}
-                        {agent.marketplace_info?.supported_providers?.join(", ") || "N/A"}
-                      </div>
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        onClick={() => {
-                          setSelectedAgent(agent.id)
-                          setModalOpen(false)
-                        }}
-                      >
-                        Select Agent
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </DialogContent>
-            </Dialog>
+            <AgentSelectionModal
+              agents={agents}
+              open={modalOpen}
+              setOpen={setModalOpen}
+              onSelect={handleSelectAgent}
+              executionCount={executions.length}
+            />
             <div className="text-sm text-muted-foreground text-center max-w-sm">
               You must select an agent to proceed with execution.
             </div>
