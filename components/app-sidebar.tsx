@@ -1,25 +1,32 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import {
   Bug,
   CircleCheckBig,
   CircleDollarSign,
-  Eye,
   FolderGit2,
-  GalleryVerticalEnd,
   LayoutDashboard,
   ShoppingCart,
+  GalleryVerticalEnd,
 } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+} from "@/components/ui/sidebar"
+import OrganizationControl from "@/components/organization-control"
+
 import Image from "next/image"
 import fullLogo from "@/public/full-logo.png"
 import accountIcon from "@/public/account.png"
-import OrganizationControl from "@/components/organization-control"
 
 const dummyUser = {
   id: "loading",
@@ -37,6 +44,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   } | null>(dummyUser)
 
   const [loading, setLoading] = React.useState(true)
+  const pathname = usePathname()
 
   React.useEffect(() => {
     const fetchUser = async () => {
@@ -90,15 +98,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <Image className="pl-4 pt-8 pb-3 pr-14" src={fullLogo} alt="Logo" />
-      
+
       <SidebarHeader>
         <OrganizationControl />
       </SidebarHeader>
 
       <SidebarContent>
-        {navMain.map((section) => (
-          <NavMain key={section.title} items={section.items} title={section.title} />
-        ))}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 8 }}
+            transition={{ duration: 0.15 }}
+          >
+            {navMain.map((section) => (
+              <NavMain key={section.title} items={section.items} title={section.title} />
+            ))}
+          </motion.div>
+        </AnimatePresence>
       </SidebarContent>
 
       <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
