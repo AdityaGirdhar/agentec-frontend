@@ -136,7 +136,7 @@ export default function Page() {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-2xl font-bold">{Math.round(utilization)}%</span>
-                    <span className="text-xs text-muted-foreground">utilized</span>
+                    <span className="text-xs text-muted-foreground">Utilized</span>
                   </div>
                 </div>
 

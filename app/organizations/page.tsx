@@ -59,7 +59,7 @@ export default function OrganizationsPage() {
           </Breadcrumb>
         </header>
 
-        <div className="px-6 pb-10 pt-4">
+        <div className="px-6 pb-4">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">Organizations</h2>
             <Button size="sm" onClick={() => setShowDialog(true)}>
