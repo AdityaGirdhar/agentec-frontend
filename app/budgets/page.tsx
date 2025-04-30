@@ -25,11 +25,8 @@ const dummyLimit = 500
 
 export default function Page() {
   const [open, setOpen] = useState(false)
-<<<<<<< HEAD
   const [selectedRange, setSelectedRange] = useState("month")
-=======
   const [showHelpModal, setShowHelpModal] = useState(false)
->>>>>>> 40668f752b9918e8899756f07784492ee08f9cef
 
   const [limit, setLimit] = useState(dummyLimit)
   const [spend, setSpend] = useState(dummySpend)
