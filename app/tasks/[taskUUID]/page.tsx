@@ -80,12 +80,17 @@ export default function TaskPage() {
                   </>
                 ) : (
                   <>
-                    <h1 className="text-2xl font-semibold flex items-center gap-2">
-                      {name}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-2xl font-semibold cursor-pointer hover:opacity-80 transition"
+                        onClick={() => setActiveTab("execution")}
+                      >
+                        {name}
+                      </span>
                       <Button variant="ghost" size="icon" onClick={() => setEditing(true)}>
                         <Pencil size={16} />
                       </Button>
-                    </h1>
+                    </div>
                     <Button size="sm" variant="outline">
                       <Share2 size={16} />
                     </Button>

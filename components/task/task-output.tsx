@@ -1,3 +1,4 @@
+// TaskOutput.tsx
 'use client'
 
 import { useEffect, useState } from "react"
@@ -16,6 +17,7 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
   const [agentInfo, setAgentInfo] = useState<any | null>(null)
   const [userInfo, setUserInfo] = useState<any | null>(null)
   const [userMap, setUserMap] = useState<Record<string, string>>({})
+  const [prevExecCount, setPrevExecCount] = useState(0)
 
   const selectedExecution =
     selectedIndex !== null ? executions[selectedIndex] : executions[executions.length - 1]
@@ -65,16 +67,29 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
     }
   }, [selectedExecution])
 
+  useEffect(() => {
+    if (executions.length > prevExecCount) {
+      setSelectedIndex(null)
+      setMenuOpen(false)
+      setPrevExecCount(executions.length)
+    }
+  }, [executions, prevExecCount])
+
   return (
     <div className="relative overflow-hidden border rounded-xl bg-muted/50 flex flex-col min-h-[320px]">
       {hasExecutions && !menuOpen && (
-        <button
-          className="absolute top-2 left-2 z-10 p-1 rounded-md backdrop-blur-md bg-black/30 hover:bg-black/70 text-white transition"
-          onClick={() => setMenuOpen(true)}
-        >
-          <Menu size={18} />
-        </button>
-      )}
+  <div className="absolute top-2 left-2 z-10 group">
+    <button
+      className="p-1 rounded-md backdrop-blur-md bg-black/30 hover:bg-black/70 text-white transition"
+      onClick={() => setMenuOpen(true)}
+    >
+      <Menu size={18} />
+    </button>
+    <div className="absolute left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition bg-black text-white text-xs rounded px-2 py-1 whitespace-nowrap pointer-events-none">
+      Execution History
+    </div>
+  </div>
+)}
 
       <div className="relative flex-1 flex overflow-hidden min-h-[320px]">
         <AnimatePresence>
