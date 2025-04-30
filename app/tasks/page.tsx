@@ -5,6 +5,8 @@ import Link from "next/link"
 import { AppSidebar } from "@/components/app-sidebar"
 import accountIcon from "@/public/account.png"
 import { useRouter } from "next/navigation"
+import ShareTaskModal from "@/components/modal/share-task"
+import HelpTaskModal from "@/components/modal/help-task"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -555,105 +557,19 @@ const handleCreateNewTask = async () => {
             </div>
           )}
         </div>
-        {activeSharedModal && (
-  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
-    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
-      <h2 className="text-lg font-semibold mb-4">Share Task</h2>
-
-      {!user?.organization ? (
-        <div className="text-sm text-muted-foreground">
-          You are not part of any organization. Sharing is unavailable.
-        </div>
-      ) : (
-        <>
-          {orgMembers === null ? (
-            <p className="text-sm text-muted-foreground">Loading members...</p>
-          ) : orgMembers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No other members found in your organization.</p>
-          ) : (
-            <ul className="space-y-3 max-h-64 overflow-y-auto pr-1">
-              {orgMembers
-    .filter(member => member.id !== user?.id)
-    .map((member: any) => (
-                <li
-                  key={member.id}
-                  className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md border"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{member.name}</p>
-                    <p className="text-xs text-muted-foreground">{member.email}</p>
-                  </div>
-                  {sharedInfoMap[activeSharedModal || ""]?.some(s => s.reciever_id === member.id) ? (
-  <Button size="sm" variant="outline" disabled>
-    Shared
-  </Button>
-) : (
-  <Button
-    size="sm"
-    variant="outline"
-    onClick={async () => {
-      try {
-        const res = await fetch("http://localhost:8000/tasks/share-task", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sender_id: user.id,
-            reciever_id: member.id,
-            task_id: activeSharedModal,
-          }),
-        })
-
-        const data = await res.json()
-        if (data.shared) {
-          fetchTasks()
-        } 
-      } catch (err) {
-        console.error("Failed to share task", err)
-      }
-    }}
-  >
-    Share
-  </Button>
-)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
-
-      <Button
-        className="absolute top-3 right-3 text-sm px-2 py-1"
-        variant="ghost"
-        onClick={() => setActiveSharedModal(null)}
-      >
-        Close
-      </Button>
-    </div>
-  </div>
+        
+{activeSharedModal && (
+  <ShareTaskModal
+    taskId={activeSharedModal}
+    user={user}
+    orgMembers={orgMembers}
+    sharedInfoMap={sharedInfoMap}
+    onClose={() => setActiveSharedModal(null)}
+    onShared={() => fetchTasks()}
+  />
 )}
 {showHelpModal && (
-  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
-    <div className="bg-white rounded-lg p-6 w-full max-w-xl shadow-xl relative">
-      <h2 className="text-lg font-semibold mb-4">Help - Tasks Page</h2>
-      <div className="space-y-4 text-sm text-muted-foreground">
-        <p><strong>Tasks:</strong> These are your personal tasks. You can create, view, or delete them.</p>
-        <p><strong>Shared Tasks:</strong> Tasks shared with you by other organization members.</p>
-        <p><strong>Schedules:</strong> Set up automated task runs by specifying frequency, time, and task name. These are stored locally in your browser.</p>
-        <p><strong>Sharing:</strong> Click the share icon next to your task to share it with members of your organization. Shared tasks show a badge with the number of users they’ve been shared with.</p>
-        <p><strong>Actions:</strong> Use buttons to view task details, share with others, or delete.</p>
-      </div>
-      <Button
-        className="absolute top-3 right-3 text-sm px-2 py-1"
-        variant="ghost"
-        onClick={() => setShowHelpModal(false)}
-      >
-        Close
-      </Button>
-    </div>
-  </div>
+  <HelpTaskModal onClose={() => setShowHelpModal(false)} />
 )}
       </SidebarInset>
       
