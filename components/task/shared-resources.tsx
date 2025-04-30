@@ -30,6 +30,7 @@ interface SharedKey {
 export default function SharedResources() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
+  const [hasOrg, setHasOrg] = useState(false)
   const [activeTab, setActiveTab] = useState<"tasks" | "keys">("tasks")
   const [loading, setLoading] = useState(false)
 
@@ -43,9 +44,20 @@ export default function SharedResources() {
     const parsed = JSON.parse(stored)
     setUser(parsed)
 
+    checkOrgStatus(parsed.id)
     fetchSharedTasks(parsed.id)
     fetchSharedKeys(parsed.id)
   }, [])
+
+  const checkOrgStatus = async (userId: string) => {
+    try {
+      const res = await fetch(`http://localhost:8000/users/get_your_organizations?user_id=${userId}`)
+      const data = await res.json()
+      setHasOrg(Array.isArray(data) && data.length > 0)
+    } catch {
+      setHasOrg(false)
+    }
+  }
 
   const fetchSharedTasks = async (userId: string) => {
     setLoading(true)
@@ -121,7 +133,7 @@ export default function SharedResources() {
   }
 
   const clip = (str?: string, len = 30) =>
-  str && str.length > len ? str.slice(0, len) + "..." : str ?? ""
+    str && str.length > len ? str.slice(0, len) + "..." : str ?? ""
 
   return (
     <div className="rounded-xl bg-muted/50 p-4">
@@ -164,7 +176,7 @@ export default function SharedResources() {
           <p className="text-sm text-muted-foreground">Loading shared tasks...</p>
         ) : sharedTasks.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {user?.organization
+            {hasOrg
               ? "No tasks shared with you yet."
               : "Join an organization to receive shared tasks."}
           </p>
@@ -178,7 +190,8 @@ export default function SharedResources() {
                 <div>
                   <p className="text-sm font-medium">{task.task_name || "Untitled Task"}</p>
                   <p className="text-xs text-muted-foreground">
-                    Shared by {task.sender_name || "Unknown"} on {new Date(task.created_time).toLocaleString()}
+                    Shared by {task.sender_name || "Unknown"} on{" "}
+                    {new Date(task.created_time).toLocaleString()}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -196,7 +209,11 @@ export default function SharedResources() {
           </ul>
         )
       ) : sharedKeys.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No keys shared with you yet.</p>
+        <p className="text-sm text-muted-foreground">
+          {hasOrg
+            ? "No keys shared with you yet."
+            : "Join an organization to receive shared keys."}
+        </p>
       ) : (
         <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white shadow-sm">
           {sharedKeys.map((key) => {
@@ -204,12 +221,11 @@ export default function SharedResources() {
             const displayKey = clip(revealed ? key.key : "•".repeat(30))
 
             return (
-              <li
-                key={key.id}
-                className="p-3 hover:bg-gray-50 transition"
-              >
+              <li key={key.id} className="p-3 hover:bg-gray-50 transition">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium truncate">{key.name || "Untitled Key"}</p>
+                  <p className="text-sm font-medium truncate">
+                    {key.name || "Untitled Key"}
+                  </p>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-sm">{displayKey}</span>
                     <button
@@ -227,7 +243,8 @@ export default function SharedResources() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Shared by {key.sender_name || "Unknown"} on {new Date(key.created_time).toLocaleString()}
+                  Shared by {key.sender_name || "Unknown"} on{" "}
+                  {new Date(key.created_time).toLocaleString()}
                 </p>
               </li>
             )

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { ChevronDown, ChevronRight } from "lucide-react"
 
 interface ShareKeyModalProps {
   keyId: string
@@ -12,7 +13,8 @@ interface ShareKeyModalProps {
 
 export default function ShareKeyModal({ keyId, onClose, onShared }: ShareKeyModalProps) {
   const [user, setUser] = useState<any>(null)
-  const [orgMembers, setOrgMembers] = useState<any[]>([])
+  const [orgs, setOrgs] = useState<any[]>([])
+  const [expandedOrgIds, setExpandedOrgIds] = useState<string[]>([])
   const [sharedInfo, setSharedInfo] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -24,22 +26,29 @@ export default function ShareKeyModal({ keyId, onClose, onShared }: ShareKeyModa
   }, [])
 
   useEffect(() => {
-    if (!user?.organization || !keyId) return
+    if (!user?.id || !keyId) return
 
     const fetchData = async () => {
       try {
-        const delay = new Promise(res => setTimeout(res, 400))
+        const orgsRes = await fetch(`http://localhost:8000/users/get_your_organizations?user_id=${user.id}`)
+        const orgList = await orgsRes.json()
 
-        const membersReq = fetch(`http://localhost:8000/organizations/get_members?org_id=${user.organization}&user_id=${user.id}`)
-        const sharedReq = fetch(`http://localhost:8000/users/keys-you-shared?user_id=${user.id}`)
+        const sharedRes = await fetch(`http://localhost:8000/users/keys-you-shared?user_id=${user.id}`)
+        const sharedList = await sharedRes.json()
 
-        const [membersRes, sharedRes] = await Promise.all([membersReq, sharedReq, delay])
+        const orgsWithMembers = await Promise.all(
+          orgList.map(async (org: any) => {
+            const membersRes = await fetch(`http://localhost:8000/organizations/get_members?org_id=${org.id}&user_id=${user.id}`)
+            const members = await membersRes.json()
+            return {
+              ...org,
+              members: members.filter((m: any) => m.id !== user.id),
+            }
+          })
+        )
 
-        const members = await membersRes.json()
-        const shared = await sharedRes.json()
-
-        setOrgMembers(Array.isArray(members) ? members.filter((m: any) => m.id !== user.id) : [])
-        setSharedInfo(Array.isArray(shared) ? shared.filter((s: any) => s.key_id === keyId) : [])
+        setOrgs(orgsWithMembers)
+        setSharedInfo(sharedList.filter((s: any) => s.key_id === keyId))
       } catch (err) {
         console.error("Error loading key share data", err)
       } finally {
@@ -49,6 +58,12 @@ export default function ShareKeyModal({ keyId, onClose, onShared }: ShareKeyModa
 
     fetchData()
   }, [user, keyId])
+
+  const handleToggleExpand = (orgId: string) => {
+    setExpandedOrgIds(prev =>
+      prev.includes(orgId) ? prev.filter(id => id !== orgId) : [...prev, orgId]
+    )
+  }
 
   const handleShare = async (memberId: string) => {
     try {
@@ -77,11 +92,7 @@ export default function ShareKeyModal({ keyId, onClose, onShared }: ShareKeyModa
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
         <h2 className="text-lg font-semibold mb-4">Share API Key</h2>
 
-        {!user?.organization ? (
-          <div className="text-sm text-muted-foreground">
-            You are not part of any organization. Sharing is unavailable.
-          </div>
-        ) : loading ? (
+        {loading ? (
           <div className="flex items-center justify-center py-8">
             <motion.div
               className="w-6 h-6 border-4 border-black border-t-transparent rounded-full animate-spin"
@@ -90,35 +101,59 @@ export default function ShareKeyModal({ keyId, onClose, onShared }: ShareKeyModa
               transition={{ duration: 0.3 }}
             />
           </div>
-        ) : orgMembers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No other organization members found.</p>
+        ) : orgs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">You are not part of any organization.</p>
         ) : (
-          <ul className="space-y-3 max-h-64 overflow-y-auto pr-1">
-            {orgMembers.map((member: any) => (
-              <li
-                key={member.id}
-                className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md border"
-              >
-                <div>
-                  <p className="text-sm font-medium">{member.name}</p>
-                  <p className="text-xs text-muted-foreground">{member.email}</p>
-                </div>
-                {sharedInfo.some(s => s.reciever_id === member.id) ? (
-                  <Button size="sm" variant="outline" disabled>
-                    Shared
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleShare(member.id)}
-                  >
-                    Share
-                  </Button>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            {orgs.map(org => (
+              <div key={org.id} className="border rounded-md">
+                <button
+                  onClick={() => handleToggleExpand(org.id)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-t-md text-left"
+                >
+                  <span className="text-sm font-medium">{org.name}</span>
+                  {expandedOrgIds.includes(org.id) ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
+                </button>
+
+                {expandedOrgIds.includes(org.id) && (
+                  <ul className="px-3 py-2 space-y-2 bg-white">
+                    {org.members.length === 0 ? (
+                      <p className="text-xs text-muted-foreground px-1 py-2">No other members in this organization.</p>
+                    ) : (
+                      org.members.map((member: any) => (
+                        <li
+                          key={member.id}
+                          className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md border"
+                        >
+                          <div>
+                            <p className="text-sm font-medium">{member.name}</p>
+                            <p className="text-xs text-muted-foreground">{member.email}</p>
+                          </div>
+                          {sharedInfo.some(s => s.reciever_id === member.id) ? (
+                            <Button size="sm" variant="outline" disabled>
+                              Shared
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleShare(member.id)}
+                            >
+                              Share
+                            </Button>
+                          )}
+                        </li>
+                      ))
+                    )}
+                  </ul>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
 
         <Button

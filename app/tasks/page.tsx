@@ -35,6 +35,7 @@ export default function Page() {
   const [user, setUser] = useState<any>(null)
   const [creatingTask, setCreatingTask] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
+  const [hasOrganization, setHasOrganization] = useState(false)
 
   const handleCreateNewTask = async () => {
     const storedUser = localStorage.getItem("user")
@@ -67,14 +68,18 @@ export default function Page() {
     const { id } = JSON.parse(storedUser)
 
     try {
-      const [ownRes, sharedByYouRes] = await Promise.all([
+      const [ownRes, sharedByYouRes, orgRes] = await Promise.all([
         fetch(`http://localhost:8000/tasks/get-tasks?user_id=${id}`),
         fetch(`http://localhost:8000/tasks/fetch-tasks-you-shared?user_id=${id}`),
+        fetch(`http://localhost:8000/users/get_your_organizations?user_id=${id}`),
       ])
 
       const ownData = await ownRes.json()
       const sharedByYouRaw = await sharedByYouRes.json()
       const sharedByYou = Array.isArray(sharedByYouRaw) ? sharedByYouRaw : []
+
+      const orgData = await orgRes.json()
+      setHasOrganization(Array.isArray(orgData) && orgData.length > 0)
 
       const receiverIdSet = [...new Set(sharedByYou.map(s => s.reciever_id))]
       const receiverInfoMap: Record<string, string> = {}
@@ -203,10 +208,10 @@ export default function Page() {
                               size="sm"
                               variant="outline"
                               onClick={() => {
-                                if (user?.organization) setActiveSharedModal(task.id)
+                                if (hasOrganization) setActiveSharedModal(task.id)
                               }}
                               className="relative"
-                              disabled={!user?.organization}
+                              disabled={!hasOrganization}
                             >
                               <Share2 size={16} />
                               {sharedInfoMap[task.id]?.length > 0 && (

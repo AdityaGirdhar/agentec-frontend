@@ -22,7 +22,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import OrganizationControl from "@/components/organization-control"
 
 import Image from "next/image"
 import fullLogo from "@/public/full-logo.png"
@@ -78,6 +77,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         { title: "Repository", url: "/repository", icon: FolderGit2 },
         { title: "Marketplace", url: "/marketplace", icon: ShoppingCart },
         { title: "Budgets", url: "/budgets", icon: CircleDollarSign },
+        { title: "Organizations", url: "/organizations", icon: GalleryVerticalEnd },
       ],
     },
     {
@@ -97,11 +97,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <Image className="pl-4 pt-8 pb-3 pr-14" src={fullLogo} alt="Logo" />
+      <Image className="pl-4 pt-8 pr-14" src={fullLogo} alt="Logo" />
 
-      <SidebarHeader>
-        <OrganizationControl />
-      </SidebarHeader>
+      <SidebarHeader />
 
       <SidebarContent>
         <AnimatePresence mode="wait">
