@@ -7,10 +7,11 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Eye, EyeOff, Copy, Share, Plus, BarChart } from "lucide-react"
+import { Eye, EyeOff, Copy, Plus, BarChart } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import AgentInfoModal from "@/components/modal/agent-info"
+import HelpRepositoryModal from "@/components/modal/help-repository"
 
 interface Agent {
   id: string
@@ -135,6 +136,7 @@ export default function RepositoryPage() {
         </header>
 
         <div className="flex flex-col gap-8 px-6 pb-10">
+          {/* Saved Agents Table */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Your Saved Agents</h2>
             {agents.length === 0 ? (
@@ -182,6 +184,7 @@ export default function RepositoryPage() {
             )}
           </div>
 
+          {/* API Keys Table */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Your API Keys</h2>
@@ -284,29 +287,8 @@ export default function RepositoryPage() {
           </div>
         </div>
 
-        {showHelpModal && (
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-6 w-full max-w-xl shadow-xl relative">
-              <h2 className="text-lg font-semibold mb-4">Help - Repository</h2>
-              <div className="space-y-4 text-sm text-muted-foreground">
-                <p><strong>Your Agents:</strong> Saved agents are listed here with their providers and execution costs.</p>
-                <p><strong>Your Keys:</strong> Add, view, and copy your API keys securely.</p>
-              </div>
-              <Button
-                className="absolute top-3 right-3 text-sm px-2 py-1"
-                variant="ghost"
-                onClick={() => setShowHelpModal(false)}
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {viewAgentId && (
-          <AgentInfoModal agentId={viewAgentId} onClose={() => setViewAgentId(null)} />
-        )}
-
+        {showHelpModal && <HelpRepositoryModal onClose={() => setShowHelpModal(false)} />}
+        {viewAgentId && <AgentInfoModal agentId={viewAgentId} onClose={() => setViewAgentId(null)} />}
         {usageModalOpen && (
           <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
             <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
