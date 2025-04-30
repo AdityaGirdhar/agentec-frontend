@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronUp, X } from "lucide-react"
+import { ChevronUp, X, Share2 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
 interface AgentInputProps {
@@ -19,6 +19,7 @@ interface AgentInputProps {
 interface KeyItem {
   id: string
   name: string
+  shared?: boolean
 }
 
 export default function AgentInput({
@@ -37,10 +38,38 @@ export default function AgentInput({
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch(`http://localhost:8000/users/get_keys?user_id=${userId}`)
-      .then(res => res.json())
-      .then(setKeys)
-      .catch(err => console.error("Failed to fetch keys", err))
+    const fetchKeys = async () => {
+      try {
+        const [ownRes, sharedRes] = await Promise.all([
+          fetch(`http://localhost:8000/users/get_keys?user_id=${userId}`),
+          fetch(`http://localhost:8000/users/keys-shared-with-you?user_id=${userId}`)
+        ])
+
+        const ownKeys = await ownRes.json()
+
+        const sharedRaw = await sharedRes.json()
+        const sharedKeys = await Promise.all(
+          sharedRaw.map(async (item: any) => {
+            try {
+              const keyInfoRes = await fetch(`http://localhost:8000/users/get_key_info?key_id=${item.key_id}`)
+              const keyInfo = await keyInfoRes.json()
+              return { id: keyInfo.id, name: keyInfo.name, shared: true }
+            } catch {
+              return null
+            }
+          })
+        )
+
+        setKeys([
+          ...ownKeys.map((k: any) => ({ id: k.id, name: k.name })),
+          ...sharedKeys.filter(Boolean)
+        ])
+      } catch (err) {
+        console.error("Failed to fetch keys", err)
+      }
+    }
+
+    fetchKeys()
   }, [userId])
 
   const allFieldsSelected = () => {
@@ -178,12 +207,15 @@ export default function AgentInput({
                     {(isDropdown ? inputFields[key].dropdown_select : keys).map((item: any, idx: number) => (
                       <button
                         key={isDropdown ? idx : item.id}
-                        className={`block w-full px-4 py-2 text-[13px] hover:bg-gray-100 text-left ${idx !== 0 ? 'border-t border-gray-200' : ''}`}
+                        className={`flex items-center gap-2 w-full px-4 py-2 text-[13px] hover:bg-gray-100 text-left ${idx !== 0 ? 'border-t border-gray-200' : ''}`}
                         onClick={() => {
                           setFieldValues(prev => ({ ...prev, [key]: isDropdown ? item : item.id }))
                           setDropdownOpen(null)
                         }}
                       >
+                        {!isDropdown && item.shared && (
+                          <Share2 size={12} className="text-muted-foreground" />
+                        )}
                         {isDropdown ? item : item.name}
                       </button>
                     ))}
