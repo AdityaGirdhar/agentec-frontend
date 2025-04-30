@@ -3,13 +3,18 @@
 import * as React from "react"
 import { usePathname } from "next/navigation"
 import {
-  Bug,
-  CircleCheckBig,
-  CircleDollarSign,
-  FolderGit2,
   LayoutDashboard,
-  ShoppingCart,
-  GalleryVerticalEnd,
+  ClipboardList,
+  Settings2,
+  Wallet,
+  Building2,
+  BookUser,
+  FlaskConical,
+  BugPlay,
+  ClipboardSignature,
+  TicketCheck,
+  Store,
+  FileStack,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -73,23 +78,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Platform",
       items: [
         { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-        { title: "Tasks", url: "/tasks", icon: CircleCheckBig },
-        { title: "Repository", url: "/repository", icon: FolderGit2 },
-        { title: "Marketplace", url: "/marketplace", icon: ShoppingCart },
-        { title: "Budgets", url: "/budgets", icon: CircleDollarSign },
-        { title: "Organizations", url: "/organizations", icon: GalleryVerticalEnd },
+        { title: "Tasks", url: "/tasks", icon: ClipboardList },
+        { title: "Repository", url: "/repository", icon: FileStack },
+        { title: "Marketplace", url: "/marketplace", icon: Store },
+        { title: "Budgets", url: "/budgets", icon: Wallet },
+        { title: "Organizations", url: "/organizations", icon: Building2 },
       ],
     },
     {
       title: "Developer",
-      items: [{ title: "Tools", url: "/tools", icon: Bug }],
+      items: [
+        { title: "Your Agents", url: "/your-agents", icon: BugPlay },
+        { title: "Test Agents", url: "/test-agents", icon: FlaskConical },
+      ],
     },
   ]
 
   if (user?.email === "admin@agentec.dev") {
     navMain.push({
       title: "Admin",
-      items: [{ title: "Console", url: "/console", icon: LayoutDashboard }],
+      items: [
+        { title: "Logs", url: "/logs", icon: Settings2 },
+        { title: "Requests", url: "/requests", icon: ClipboardSignature },
+        { title: "Tickets", url: "/tickets", icon: TicketCheck },
+      ],
     })
   }
 
