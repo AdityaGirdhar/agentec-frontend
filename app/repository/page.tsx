@@ -7,10 +7,10 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Eye, EyeOff, Copy, Share, Plus } from "lucide-react"
+import { Eye, EyeOff, Copy, Share, Plus, BarChart } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { BarChart } from "lucide-react"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import AgentInfoModal from "@/components/modal/agent-info"
 
 interface Agent {
   id: string
@@ -38,20 +38,8 @@ export default function RepositoryPage() {
   const [secretKey, setSecretKey] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
-  const [selectedAgentDetail, setSelectedAgentDetail] = useState<any>(null)
-  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [viewAgentId, setViewAgentId] = useState<string | null>(null)
   const [usageModalOpen, setUsageModalOpen] = useState(false)
-
-  const handleViewAgent = async (agentId: string) => {
-    try {
-      const res = await fetch(`http://localhost:8000/agents/get_agent_info?agent_id=${agentId}`)
-      const data = await res.json()
-      setSelectedAgentDetail(data)
-      setDetailModalOpen(true)
-    } catch (err) {
-      console.error("Failed to fetch agent detail", err)
-    }
-  }
 
   useEffect(() => {
     const fetchAgents = async (userId: string) => {
@@ -147,52 +135,52 @@ export default function RepositoryPage() {
         </header>
 
         <div className="flex flex-col gap-8 px-6 pb-10">
-        <div>
-  <h2 className="text-xl font-semibold mb-4">Your Saved Agents</h2>
-  {agents.length === 0 ? (
-    <p className="text-sm text-muted-foreground">No saved agents found.</p>
-  ) : (
-    <div className="rounded-xl overflow-hidden border">
-      <table className="w-full text-sm border-collapse table-fixed">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="text-left p-3 w-1/4">Name</th>
-            <th className="text-left p-3 w-1/4">Providers</th>
-            <th className="text-left p-3 w-1/4">Cost</th>
-            <th className="text-left p-3 w-1/4">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {agents.map(agent => (
-            <tr key={agent.id} className="border-t hover:bg-gray-50">
-              <td className="p-3">{agent.name}</td>
-              <td className="p-3">{agent.provider.join(", ")}</td>
-              <td className="p-3">${agent.cost_per_execution}</td>
-              <td className="p-3 flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  title="View Details"
-                  onClick={() => handleViewAgent(agent.id)}
-                >
-                  <Eye size={16} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  title="View Usage"
-                  onClick={() => setUsageModalOpen(true)}
-                >
-                  <BarChart size={16} />
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
-</div>
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Your Saved Agents</h2>
+            {agents.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No saved agents found.</p>
+            ) : (
+              <div className="rounded-xl overflow-hidden border">
+                <table className="w-full text-sm border-collapse table-fixed">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="text-left p-3 w-1/4">Name</th>
+                      <th className="text-left p-3 w-1/4">Providers</th>
+                      <th className="text-left p-3 w-1/4">Cost</th>
+                      <th className="text-left p-3 w-1/4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {agents.map(agent => (
+                      <tr key={agent.id} className="border-t hover:bg-gray-50">
+                        <td className="p-3">{agent.name}</td>
+                        <td className="p-3">{agent.provider.join(", ")}</td>
+                        <td className="p-3">${agent.cost_per_execution}</td>
+                        <td className="p-3 flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="View Details"
+                            onClick={() => setViewAgentId(agent.id)}
+                          >
+                            <Eye size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="View Usage"
+                            onClick={() => setUsageModalOpen(true)}
+                          >
+                            <BarChart size={16} />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -314,44 +302,26 @@ export default function RepositoryPage() {
             </div>
           </div>
         )}
-        {detailModalOpen && selectedAgentDetail && (
-  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
-    <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl relative">
-      <h2 className="text-lg font-semibold mb-4">Agent Details - {selectedAgentDetail.name}</h2>
-      <div className="space-y-2 text-sm">
-        <p><strong>Description:</strong> {selectedAgentDetail.marketplace_info.description}</p>
-        <p><strong>Tags:</strong> {selectedAgentDetail.marketplace_info.tags}</p>
-        <p><strong>Developer Contact:</strong> {selectedAgentDetail.marketplace_info.developer_contact}</p>
-      </div>
-      <Button
-        className="absolute top-3 right-3 text-sm px-2 py-1"
-        variant="ghost"
-        onClick={() => setDetailModalOpen(false)}
-      >
-        Close
-      </Button>
-    </div>
-  </div>
-)}
 
-{usageModalOpen && (
-  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
-    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
-      <h2 className="text-lg font-semibold mb-4">Agent Usage</h2>
-      <div className="text-muted-foreground text-sm">
-        {/* Empty for now */}
-        Coming soon.
-      </div>
-      <Button
-        className="absolute top-3 right-3 text-sm px-2 py-1"
-        variant="ghost"
-        onClick={() => setUsageModalOpen(false)}
-      >
-        Close
-      </Button>
-    </div>
-  </div>
-)}
+        {viewAgentId && (
+          <AgentInfoModal agentId={viewAgentId} onClose={() => setViewAgentId(null)} />
+        )}
+
+        {usageModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
+              <h2 className="text-lg font-semibold mb-4">Agent Usage</h2>
+              <div className="text-muted-foreground text-sm">Coming soon.</div>
+              <Button
+                className="absolute top-3 right-3 text-sm px-2 py-1"
+                variant="ghost"
+                onClick={() => setUsageModalOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
       </SidebarInset>
     </SidebarProvider>
   )
