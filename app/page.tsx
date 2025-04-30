@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Network, Cpu, Settings } from 'lucide-react';
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import logo from '@/public/logo.png';
@@ -34,7 +35,6 @@ export default function LandingPage() {
         </span>
         <div className="flex gap-6">
           <a href="#features" className="hover:text-white transition-colors">Features</a>
-          <a href="#cta" className="hover:text-white transition-colors">Get Started</a>
         </div>
       </nav>
 
@@ -65,7 +65,7 @@ export default function LandingPage() {
           className="mt-10"
         >
           <Button size="lg" className="text-lg font-bold gap-2 px-8 py-6 bg-white text-black hover:scale-105 hover:bg-gray-300 transition-transform">
-            Get started for free <ArrowRight className="w-5 h-5" />
+            <a href="/login">Get started</a>
           </Button>
         </motion.div>
       </section>
@@ -75,19 +75,28 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-10">Why Choose Agentec?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-left">
-            <div className="bg-[#1a1a1a]/80 p-6 rounded-2xl shadow-md hover:shadow-lg transition">
-              <h3 className="text-xl font-semibold mb-2">1. Lightning Onboarding</h3>
-              <p className="text-gray-400">Upload, configure, and deploy agents in seconds with our guided setup wizard.</p>
-            </div>
-            <div className="bg-[#1a1a1a]/80 p-6 rounded-2xl shadow-md hover:shadow-lg transition">
-              <h3 className="text-xl font-semibold mb-2">2. Real-time Monitoring</h3>
-              <p className="text-gray-400">Track agent status, logs, and performance metrics in a beautiful dashboard.</p>
-            </div>
-            <div className="bg-[#1a1a1a]/80 p-6 rounded-2xl shadow-md hover:shadow-lg transition">
-              <h3 className="text-xl font-semibold mb-2">3. API-first Architecture</h3>
-              <p className="text-gray-400">Seamlessly integrate with your stack using our secure REST & GraphQL APIs.</p>
-            </div>
-          </div>
+  <div className="bg-[#1a1a1a]/80 p-6 rounded-2xl shadow-md hover:shadow-lg transition">
+    <Network className="mb-4 text-white" size={32} />
+    <h3 className="text-xl font-semibold mb-2">Cross-Platform Compatibility</h3>
+    <p className="text-gray-400">
+      Effortlessly connect with APIs and tools from OpenAI, Anthropic, Google Gemini, and more — all in one place.
+    </p>
+  </div>
+  <div className="bg-[#1a1a1a]/80 p-6 rounded-2xl shadow-md hover:shadow-lg transition">
+    <Cpu className="mb-4 text-white" size={32} />
+    <h3 className="text-xl font-semibold mb-2">Cutting-Edge Agent Technology</h3>
+    <p className="text-gray-400">
+      Stay ahead with support for the latest advancements in AI agent frameworks and orchestration protocols.
+    </p>
+  </div>
+  <div className="bg-[#1a1a1a]/80 p-6 rounded-2xl shadow-md hover:shadow-lg transition">
+    <Settings className="mb-4 text-white" size={32} />
+    <h3 className="text-xl font-semibold mb-2">Intelligent Resource Control</h3>
+    <p className="text-gray-400">
+      Streamline API key control, cost efficiency, and agent utilization through one intelligent platform.
+    </p>
+  </div>
+</div>
         </div>
       </section>
 
@@ -107,13 +116,14 @@ export default function LandingPage() {
             crewai_logo
           ].map((src, i) => (
             <div key={i} className="mx-16 flex items-center justify-center h-16 w-full">
+              <div className="relative h-12 w-32">
               <Image
                 src={src}
                 alt={`Logo ${i}`}
-                height={48}
-                width={120}
-                className="object-contain h-full w-auto grayscale hover:grayscale-0 transition duration-300"
+                fill
+                className="object-contain grayscale hover:grayscale-0 transition duration-200"
               />
+            </div>
             </div>
           ))}
         </Marquee>
@@ -122,9 +132,9 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section id="cta" className="relative z-10 px-6 py-24 text-center bg-gradient-to-b from-[#0c0c0c]/80 to-[#0a0a0a]/80">
         <h2 className="text-4xl font-bold mb-6">Ready to Scale Your Agents?</h2>
-        <p className="text-gray-400 text-lg mb-10">Join leading teams who are building the future of AI workflows with Agentec.</p>
+        <p className="text-gray-400 text-lg mb-10">Join Agentec to streamline your AI agents and maximize operational efficiency.</p>
         <Button size="lg" className="hover:bg-gray-300 text-lg font-bold gap-2 px-8 py-6 bg-white text-black hover:scale-105 transition-transform">
-          Get Started Free <ArrowRight className="w-5 h-5" />
+          <a href="/login">Get started</a>
         </Button>
       </section>
 
