@@ -75,45 +75,30 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
     }
   }, [executions, prevExecCount])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" && currentIndex > 0) {
+        setSelectedIndex(currentIndex - 1)
+      } else if (e.key === "ArrowRight" && currentIndex < executions.length - 1) {
+        setSelectedIndex(currentIndex + 1)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [currentIndex, executions.length])
+
   return (
     <div className="relative overflow-hidden border rounded-xl bg-muted/50 flex flex-col min-h-[320px]">
       {hasExecutions && (
-  <div className="absolute top-2 left-2 z-10 flex gap-2 items-center">
-    {/* Hamburger */}
-    <div>
-      <button
-        className="p-1 rounded-md backdrop-blur-md bg-black/30 hover:bg-black/70 text-white transition"
-        onClick={() => setMenuOpen(true)}
-      >
-        <Menu size={18} />
-      </button>
-    </div>
-
-    {/* Prev Button */}
-    {currentIndex > 0 && (
-      <div>
-        <button
-          onClick={() => setSelectedIndex(currentIndex - 1)}
-          className="px-3 py-1 rounded-md text-sm bg-black/20 hover:bg-black/70 text-white transition backdrop-blur-md"
-        >
-          Prev
-        </button>
-      </div>
-    )}
-
-    {/* Next Button */}
-    {currentIndex < executions.length - 1 && (
-      <div>
-        <button
-          onClick={() => setSelectedIndex(currentIndex + 1)}
-          className="px-3 py-1 rounded-md text-sm bg-black/20 hover:bg-black/70 text-white transition backdrop-blur-md"
-        >
-          Next
-        </button>
-      </div>
-    )}
-  </div>
-)}
+        <div className="absolute top-2 left-2 z-10">
+          <button
+            className="p-1 rounded-md backdrop-blur-md bg-black/30 hover:bg-black/70 text-white transition"
+            onClick={() => setMenuOpen(true)}
+          >
+            <Menu size={18} />
+          </button>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="relative flex-1 flex overflow-hidden min-h-[320px]">
@@ -129,7 +114,6 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
           )}
         </AnimatePresence>
 
-        {/* Output Section */}
         <div className="flex-1 overflow-y-auto px-6 py-4 scrollbar-thin relative z-0">
           <AnimatePresence mode="wait">
             {selectedExecution ? (
@@ -152,7 +136,6 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
                   </div>
                 </div>
 
-                {/* Query Section */}
                 <div className="mb-6">
                   <div className="text-xs uppercase text-gray-500 mb-2 tracking-widest">Your Query</div>
                   <div className="bg-gray-50 rounded-md p-4 text-sm whitespace-pre-wrap mb-3">
@@ -180,7 +163,6 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
                   </div>
                 </div>
 
-                {/* Markdown Output */}
                 <div>
                   <div className="text-xs uppercase text-gray-500 mb-2 tracking-widest">Agent Response</div>
                   <div className="bg-gray-50 rounded-md p-4 text-sm prose max-w-none prose-headings:mt-2 prose-headings:mb-1 prose-p:leading-relaxed">
@@ -202,7 +184,6 @@ export default function TaskOutput({ executions }: TaskOutputProps) {
           </AnimatePresence>
         </div>
 
-        {/* Sidebar */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div
