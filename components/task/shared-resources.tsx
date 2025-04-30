@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Eye } from "lucide-react"
+import { Eye, EyeOff, Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
@@ -15,12 +15,37 @@ interface SharedTask {
   task_name?: string
 }
 
+interface SharedKey {
+  id: string
+  key_id: string
+  reciever_id: string
+  created_time: string
+  sender_id: string
+  name?: string
+  provider?: string
+  key?: string
+  sender_name?: string
+}
+
 export default function SharedResources() {
   const router = useRouter()
-  const [sharedTasks, setSharedTasks] = useState<SharedTask[]>([])
-  const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<"tasks" | "keys">("tasks")
   const [user, setUser] = useState<any>(null)
+  const [activeTab, setActiveTab] = useState<"tasks" | "keys">("tasks")
+  const [loading, setLoading] = useState(false)
+
+  const [sharedTasks, setSharedTasks] = useState<SharedTask[]>([])
+  const [sharedKeys, setSharedKeys] = useState<SharedKey[]>([])
+  const [revealMap, setRevealMap] = useState<{ [key: string]: boolean }>({})
+
+  useEffect(() => {
+    const stored = localStorage.getItem("user")
+    if (!stored) return
+    const parsed = JSON.parse(stored)
+    setUser(parsed)
+
+    fetchSharedTasks(parsed.id)
+    fetchSharedKeys(parsed.id)
+  }, [])
 
   const fetchSharedTasks = async (userId: string) => {
     setLoading(true)
@@ -56,13 +81,47 @@ export default function SharedResources() {
     }
   }
 
-  useEffect(() => {
-    const stored = localStorage.getItem("user")
-    if (!stored) return
-    const parsed = JSON.parse(stored)
-    setUser(parsed)
-    fetchSharedTasks(parsed.id)
-  }, [])
+  const fetchSharedKeys = async (userId: string) => {
+    try {
+      const res = await fetch(`http://localhost:8000/users/keys-shared-with-you?user_id=${userId}`)
+      const sharedList: SharedKey[] = await res.json()
+
+      const enriched: SharedKey[] = await Promise.all(
+        sharedList.map(async (entry) => {
+          try {
+            const keyRes = await fetch(`http://localhost:8000/users/get_key_info?key_id=${entry.key_id}`)
+            const keyInfo = await keyRes.json()
+
+            const senderRes = await fetch(`http://localhost:8000/users/get_user_info?user_id=${entry.sender_id}`)
+            const senderInfo = await senderRes.json()
+
+            return {
+              ...entry,
+              ...keyInfo,
+              sender_name: senderInfo.name,
+            }
+          } catch {
+            return entry
+          }
+        })
+      )
+
+      setSharedKeys(enriched)
+    } catch (err) {
+      console.error("Failed to fetch shared keys:", err)
+    }
+  }
+
+  const toggleReveal = (id: string) => {
+    setRevealMap(prev => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  const copyToClipboard = (value: string) => {
+    navigator.clipboard.writeText(value)
+  }
+
+  const clip = (str?: string, len = 30) =>
+  str && str.length > len ? str.slice(0, len) + "..." : str ?? ""
 
   return (
     <div className="rounded-xl bg-muted/50 p-4">
@@ -136,10 +195,44 @@ export default function SharedResources() {
             ))}
           </ul>
         )
+      ) : sharedKeys.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No keys shared with you yet.</p>
       ) : (
-        <div className="text-sm text-muted-foreground border border-gray-200 bg-white rounded-lg shadow-sm p-6">
-          Shared keys functionality is coming soon.
-        </div>
+        <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white shadow-sm">
+          {sharedKeys.map((key) => {
+            const revealed = revealMap[key.key_id]
+            const displayKey = clip(revealed ? key.key : "•".repeat(30))
+
+            return (
+              <li
+                key={key.id}
+                className="p-3 hover:bg-gray-50 transition"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium truncate">{key.name || "Untitled Key"}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm">{displayKey}</span>
+                    <button
+                      className="text-muted-foreground hover:text-black"
+                      onClick={() => toggleReveal(key.key_id)}
+                    >
+                      {revealed ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                    <button
+                      className="text-muted-foreground hover:text-black"
+                      onClick={() => copyToClipboard(key.key || "")}
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Shared by {key.sender_name || "Unknown"} on {new Date(key.created_time).toLocaleString()}
+                </p>
+              </li>
+            )
+          })}
+        </ul>
       )}
     </div>
   )
