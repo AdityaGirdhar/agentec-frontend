@@ -558,19 +558,17 @@ const handleCreateNewTask = async () => {
           )}
         </div>
         
-{activeSharedModal && (
-  <ShareTaskModal
-    taskId={activeSharedModal}
-    user={user}
-    orgMembers={orgMembers}
-    sharedInfoMap={sharedInfoMap}
-    onClose={() => setActiveSharedModal(null)}
-    onShared={() => fetchTasks()}
-  />
-)}
-{showHelpModal && (
-  <HelpTaskModal onClose={() => setShowHelpModal(false)} />
-)}
+        {activeSharedModal && (
+            <ShareTaskModal
+              taskId={activeSharedModal}
+              user={user}
+              onClose={() => setActiveSharedModal(null)}
+              onShared={() => fetchTasks()}
+            />
+          )}
+        {showHelpModal && (
+          <HelpTaskModal onClose={() => setShowHelpModal(false)} />
+        )}
       </SidebarInset>
       
     </SidebarProvider>
