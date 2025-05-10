@@ -1,59 +1,149 @@
 'use client';
 
-import { useRouter } from "next/navigation";
-import Image from 'next/image';
-import landing_background from '../public/landing_background.png';
-import logo from '../public/logo.png';
+import { useEffect } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Network, Cpu, Settings } from 'lucide-react';
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
+import logo from '@/public/logo.png';
+import Marquee from "react-fast-marquee";
+import anthropic_logo from "@/public/logos/anthropic.png"
+import gemini_logo from "@/public/logos/gemini.png"
+import meta_logo from "@/public/logos/meta.png"
+import openai_logo from "@/public/logos/openai.png"
+import microsoft_logo from "@/public/logos/microsoft.png"
+import crewai_logo from "@/public/logos/crewai.png"
+import langchain_logo from "@/public/logos/langchain.png"
 
-export default function Home() {
-  const router = useRouter();
-
-  const handleSignIn = () => {
-    router.push('/login');
-  }
+export default function LandingPage() {
+  useEffect(() => {
+    document.title = "Agentec | Next-Gen Agent Management";
+  }, []);
 
   return (
-    <main className="relative h-screen w-full overflow-hidden flex flex-col">
-      {/* Background Image */}
-      <Image
-        src={landing_background}
-        alt="Background"
-        fill
-        className="object-cover -z-10"
-        priority
-        quality={100}
-      />
+    <main className="relative min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden">
+      {/* Blurred Animated Gradient Background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -inset-20 w-full h-full animate-gradientLoop bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 opacity-30 blur-3xl" />
+      </div>
 
-      {/* Navbar */}
-      <nav className="absolute top-0 left-0 w-full flex justify-between items-center px-6 md:px-24 py-4 md:py-6 bg-transparent z-10">
-        <Image 
-          src={logo} 
-          alt="Logo" 
-          width={80} 
-          height={80} 
-          className="object-cover" 
-          priority 
-          quality={100} 
-        />
-        <div className="flex gap-4">
-          <button 
-            onClick={handleSignIn} 
-            className="bg-white text-sm md:text-base font-black px-4 md:px-5 py-2 rounded-md md:rounded-lg transition-all duration-200 hover:bg-opacity-80 hover:scale-105"
-          >
-            Sign in
-          </button>
+      {/* Sticky Floating Navbar */}
+      <nav className="fixed top-4 left-1/2 w-4/5 -translate-x-1/2 z-50 bg-[#121212]/80 backdrop-blur-lg border border-neutral-800 shadow-xl rounded-full px-8 py-4 flex items-center justify-between gap-8 text-sm font-medium text-gray-200">
+        <span className="text-white font-bold tracking-wide">
+          <Image src={logo} alt="logo" className="aspect-auto w-32" />
+        </span>
+        <div className="flex gap-6">
+          <a href="#features" className="hover:text-white transition-colors">Features</a>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <div className="flex flex-col items-center justify-center flex-grow p-4 text-center">
-        <h1 className="text-3xl md:text-4xl text-white font-poppins font-bold leading-tight">
-          AI Agents made <span className="font-thin italic">easy</span>
-        </h1>
-        <h2 className="text-lg md:text-2xl text-white font-geistMono mt-3 max-w-2xl">
-          Agentec allows you to deploy, monitor, & optimize AI agents effortlessly.
-        </h2>
-      </div>
+      {/* Hero Section */}
+      <section className="relative z-10 flex flex-col items-center justify-center px-6 pt-32 pb-24 text-center h-screen">
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="py-4 text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent animate-text-gradient"
+        >
+          Supercharge Your Agents
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.2, delay: 0.2 }}
+          className="mt-6 max-w-xl text-lg md:text-xl text-gray-300"
+        >
+          Agentec helps you manage, onboard, and monitor all your AI agents with ease — built for the modern stack.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.3, delay: 0.4 }}
+          className="mt-10"
+        >
+          <Button size="lg" className="text-lg font-bold gap-2 px-8 py-6 bg-white text-black hover:scale-105 hover:bg-gray-300 transition-transform">
+            <a href="/login">Get started</a>
+          </Button>
+        </motion.div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="relative z-10 px-6 py-24 bg-[#0c0c0c]/80">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-4xl font-bold mb-10">Why Choose Agentec?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-left">
+  <div className="bg-[#1a1a1a]/80 p-6 rounded-2xl shadow-md hover:shadow-lg transition">
+    <Network className="mb-4 text-white" size={32} />
+    <h3 className="text-xl font-semibold mb-2">Cross-Platform Compatibility</h3>
+    <p className="text-gray-400">
+      Effortlessly connect with APIs and tools from OpenAI, Anthropic, Google Gemini, and more — all in one place.
+    </p>
+  </div>
+  <div className="bg-[#1a1a1a]/80 p-6 rounded-2xl shadow-md hover:shadow-lg transition">
+    <Cpu className="mb-4 text-white" size={32} />
+    <h3 className="text-xl font-semibold mb-2">Cutting-Edge Agent Technology</h3>
+    <p className="text-gray-400">
+      Stay ahead with support for the latest advancements in AI agent frameworks and orchestration protocols.
+    </p>
+  </div>
+  <div className="bg-[#1a1a1a]/80 p-6 rounded-2xl shadow-md hover:shadow-lg transition">
+    <Settings className="mb-4 text-white" size={32} />
+    <h3 className="text-xl font-semibold mb-2">Intelligent Resource Control</h3>
+    <p className="text-gray-400">
+      Streamline API key control, cost efficiency, and agent utilization through one intelligent platform.
+    </p>
+  </div>
+</div>
+        </div>
+      </section>
+
+      {/* Logos Marquee Section */}
+      <section className="relative z-10 py-12 bg-[#0a0a0a]">
+        <h3 className="text-center text-sm uppercase tracking-widest text-gray-400 mb-16">
+          Trusted by leading teams
+        </h3>
+        <Marquee gradient={false} speed={60} pauseOnHover className="flex gap-20">
+          {[
+            anthropic_logo,
+            gemini_logo,
+            meta_logo,
+            openai_logo,
+            langchain_logo,
+            microsoft_logo,
+            crewai_logo
+          ].map((src, i) => (
+            <div key={i} className="mx-16 flex items-center justify-center h-16 w-full">
+              <div className="relative h-12 w-32">
+              <Image
+                src={src}
+                alt={`Logo ${i}`}
+                fill
+                className="object-contain grayscale hover:grayscale-0 transition duration-200"
+              />
+            </div>
+            </div>
+          ))}
+        </Marquee>
+      </section>
+
+      {/* CTA Section */}
+      <section id="cta" className="relative z-10 px-6 py-24 text-center bg-gradient-to-b from-[#0c0c0c]/80 to-[#0a0a0a]/80">
+        <h2 className="text-4xl font-bold mb-6">Ready to Scale Your Agents?</h2>
+        <p className="text-gray-400 text-lg mb-10">Join Agentec to streamline your AI agents and maximize operational efficiency.</p>
+        <Button size="lg" className="hover:bg-gray-300 text-lg font-bold gap-2 px-8 py-6 bg-white text-black hover:scale-105 transition-transform">
+          <a href="/login">Get started</a>
+        </Button>
+      </section>
+
+
+
+      {/* Footer */}
+      <footer className="text-gray-500 text-center text-sm py-6 border-t border-neutral-800 bg-[#0a0a0a]/90">
+        © 2025 Agentec. All rights reserved.
+      </footer>
     </main>
   );
 }
